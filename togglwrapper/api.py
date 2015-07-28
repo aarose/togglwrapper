@@ -5,9 +5,6 @@ from requests.auth import HTTPBasicAuth
 BASE_URL = 'https://www.toggl.com/api'
 API_VERSION = 'v8'
 API_URL = '{base}/{version}'.format(base=BASE_URL, version=API_VERSION)
-API_TOKEN = ''
-
-auth = HTTPBasicAuth(API_TOKEN, 'api_token')
 
 
 class TogglObject(object):
@@ -24,7 +21,7 @@ class User(TogglObject):
 
     def get(self, related_data=False, since=None):
         """ Get the user associated with the current API token. """
-        response = requests.get(self.full_uri, auth=auth)
+        response = requests.get(self.full_uri, auth=self.client.auth)
         return response.json()
 
     def update(self, data):
@@ -37,5 +34,11 @@ class Client(object):
         # self.api_token = api_token
         self.api_url = '{base}/{version}'.format(base=base_url,
                                                  version=version)
-        self.auth = HTTPBasicAuth(self.api_token, 'api_token')
+        self.auth = HTTPBasicAuth(api_token, 'api_token')
         self.user = User(self)
+
+    def test_connection(self):
+        """ Test for a successful connection. """
+        test_url = '{base}{uri}'.format(base=self.api_url, uri='test')
+        response = requests.get(test_url, auth=self.client.auth)
+        return response.json()
