@@ -1,3 +1,5 @@
+import json
+
 import requests
 from requests.auth import HTTPBasicAuth
 
@@ -122,12 +124,41 @@ class Client(object):
         self.Workspaces = Workspaces(self)
         self.WorkspaceUsers = WorkspaceUsers(self)
 
-    def signups(self):
-        """ Create a new user. """
-        uri = '{}/signups'.format(self.api_url)
-        requests.post(uri, auth=self.auth)
+    def signups(self, user_info):
+        """
+        Create a new user.
+
+        Args:
+          user_info (dict): Values for all the required and optional fields.
+        """
+        return self.post('/signups', {'user': user_info})
 
     def reset_token(self):
         """ Delete the current API Token and use a new token. """
-        uri = '{}/reset_token'.format(self.api_url)
-        requests.post(uri, auth=self.auth)
+        return self.post('/reset_token')
+
+    @return_json_or_raise_error
+    def get(self, uri):
+        """ GET to the given uri. """
+        full_uri = '{base}{uri}'.format(base=self.api_url, uri=uri)
+        return requests.get(full_uri, auth=self.auth)
+
+    @return_json_or_raise_error
+    def post(self, uri, data=None):
+        """ POST to the given uri with a data dict. """
+        full_uri = '{base}{uri}'.format(base=self.api_url, uri=uri)
+        payload = json.dumps(data) if data is not None else None
+        return requests.post(full_uri, data=payload, auth=self.auth)
+
+    @return_json_or_raise_error
+    def put(self, uri, data):
+        """ PUT to the given uri with a data dict. """
+        full_uri = '{base}{uri}'.format(base=self.api_url, uri=uri)
+        payload = json.dumps(data)
+        return requests.put(full_uri, data=payload, auth=self.auth)
+
+    @return_json_or_raise_error
+    def delete(self, uri):
+        """ DELETE to the given uri. """
+        full_uri = '{base}{uri}'.format(self.api_url, uri)
+        return requests.delete(full_uri, auth=self.auth)
