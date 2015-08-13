@@ -46,28 +46,12 @@ class TogglObject(object):
 
     @return_json_or_raise_error
     def delete(self, object_id):
+        uri = '{uri}/{object_id}'.format(self.full_uri, object_id)
         return requests.delete(uri, auth=self.client.auth)
-
-
-class User(TogglObject):
-    uri = '/me'
-
-    @return_json_or_raise_error
-    def get(self, related_data=False, since=None):
-        """ Get the user associated with the current API token. """
-        return requests.get(self.full_uri, auth=self.client.auth)
-
-    def update(self, data):
-        """ Update the fields. """
-        pass
 
 
 class Clients(TogglObject):
     uri = '/clients'
-
-
-class Workspaces(TogglObject):
-    uri = '/workspaces'
 
 
 class Projects(TogglObject):
@@ -90,6 +74,34 @@ class TimeEntries(TogglObject):
     uri = '/time_entires'
 
 
+class User(TogglObject):
+    uri = '/me'
+
+    def _compile_query(self, related_data=False, since=None):
+        """ Returns the querystring. """
+        query = '?with_related_data=true' if related_data else ''
+        if related_data and since is not None:
+            query += '&'
+        if since is not None:
+            query += '?since={}'.format(since)
+        return query
+
+    @return_json_or_raise_error
+    def get(self, related_data=False, since=None):
+        """ Get the user associated with the current API token. """
+        query = self._compile_query(related_data=related_data, since=since)
+        uri = '{uri}{query}'.format(uri=self.full_uri, query=query)
+        return requests.get(uri, auth=self.client.auth)
+
+    def update(self, data):
+        """ Update the fields. """
+        return requests.put(self.full_uri, data=data, auth=self.client.auth)
+
+
+class Workspaces(TogglObject):
+    uri = '/workspaces'
+
+
 class WorkspaceUsers(TogglObject):
     uri = '/workspace_users'
 
@@ -99,10 +111,19 @@ class Client(object):
         self.api_url = '{base}/{version}'.format(base=base_url,
                                                  version=version)
         self.auth = HTTPBasicAuth(api_token, 'api_token')
+        self.Clients = Clients(self)
         self.User = User(self)
+        self.Projects = Projects(self)
+        self.ProjectUsers = ProjectUsers(self)
+        self.Tags = Tags(self)
+        self.Tasks = Tasks(self)
+        self.TimeEntries = TimeEntries(self)
+        self.User = User(self)
+        self.Workspaces = Workspaces(self)
+        self.WorkspaceUsers = WorkspaceUsers(self)
 
-    def signup(self):
-        """ Signup a new user. """
+    def signups(self):
+        """ Create a new user. """
         uri = '{}/signups'.format(self.api_url)
         requests.post(uri, auth=self.auth)
 
