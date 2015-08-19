@@ -1,0 +1,12 @@
+{
+    "data":{[
+        "id":3511220,
+        "uid":35934278,
+        "wid":777,
+        "admin":false,
+        "active":false,
+        "email":"jane.swift@toggl.com",
+        "invite_url":"https://toggl.com/user/accept_invitation?code=ec2876e421234dfasd0fa1c55370d3940"
+    ]},
+    "notifications":["To add more users you have to Upgrade"]
+}
