@@ -106,6 +106,10 @@ class Clients(TogglObject, Get, Create, Update, Delete):
         params = {'active': active}
         return self.get_child_objects(client_id, '/projects', params=params)
 
+
+class Dashboard(TogglObject, Get):
+    uri = 'dashboard'
+
     def get(self, workspace_id):
         """ Get the Dashboard for the Workspace with the given ID. """
         return super(Dashboard, self).get(id=workspace_id)
@@ -114,10 +118,25 @@ class Clients(TogglObject, Get, Create, Update, Delete):
 class Projects(TogglObject, Get, Create, Update, Delete):
     uri = '/projects'
 
+    def get(self, project_id):
+        """ Get the Project with the given ID. """
+        return super(Projects, self).get(id=project_id)
+
+    def get_project_users(self, project_id):
+        """ Get the ProjectUsers for the Project with the given ID. """
+        return self.get_child_objects(project_id, '/project_users')
+
+    def get_tasks(self, project_id):
+        """ Get the Tasks for the Project with the given ID. """
+        return self.get_child_objects(project_id, '/tasks')
+
 
 class ProjectUsers(TogglObject, Create, Update, Delete):
     uri = '/project_users'
 
+    def get_for_project(self, project_id):
+        """ Get the ProjectUsers for the Project with the given ID. """
+        return self.toggl.Projects.get_project_users(project_id)
 
 
 class Tags(TogglObject, Create, Update, Delete):
@@ -127,9 +146,12 @@ class Tags(TogglObject, Create, Update, Delete):
 class Tasks(TogglObject, Get, Create, Update, Delete):
     uri = '/tasks'
 
+    def get(self, tag_id):
+        return super(Projects, self).get(id=tag_id)
 
-class TimeEntries(TogglObject):
-    uri = '/time_entires'
+    def get_for_project(self, project_id):
+        """ Get the Tasks for the Project with the given ID. """
+        return self.toggl.Projects.get_tasks(project_id)
 
 
 class TimeEntries(TogglObject, Get, Create, Update, Delete):
@@ -151,12 +173,13 @@ class TimeEntries(TogglObject, Get, Create, Update, Delete):
         return self.toggl.post(uri.format(time_entry_id=time_entry_id))
 
 
+class User(TogglObject, Get):
+    uri = '/me'
 
     def get(self, related_data=False, since=None):
         """ Get the user associated with the current API token. """
-        query = self._compile_query(related_data=related_data, since=since)
-        uri = '{uri}{query}'.format(uri=self.full_uri, query=query)
-        return requests.get(uri, auth=self.client.auth)
+        params = {'related_data': related_data, 'since': since}
+        return super(User, self).get(params=params)
 
     def update(self, data):
         """ Update the user associated with the api token. """
@@ -165,6 +188,35 @@ class TimeEntries(TogglObject, Get, Create, Update, Delete):
 
 class Workspaces(TogglObject, Get, Update):
     uri = '/workspaces'
+
+    def get_users(self, workspace_id):
+        """ Get the Users for the Workspace with the given ID. """
+        return self.get_child_objects(workspace_id, '/users')
+
+    def get_clients(self, workspace_id):
+        """ Get the Clients for the Workspace with the given ID. """
+        return self.get_child_objects(workspace_id, '/clients')
+
+    def get_projects(self, workspace_id):
+        """ Get the Projects for the Workspace with the given ID. """
+        return self.get_child_objects(workspace_id, '/projects')
+
+    def get_tasks(self, workspace_id):
+        """ Get the Tasks for the Workspace with the given ID. """
+        return self.get_child_objects(workspace_id, '/tasks')
+
+    def get_tags(self, workspace_id):
+        """ Get the Tags for the Workspace with the given ID. """
+        return self.get_child_objects(workspace_id, '/tags')
+
+    def get_workspace_users(self, workspace_id):
+        """ Get the Tags for the Workspace with the given ID. """
+        return self.get_child_objects(workspace_id, '/workspace_users')
+
+    def invite(self, workspace_id, data):
+        """ add users to workspace. """
+        uri = '/workspaces/{workspace_id}/invite'.format(workspace_id)
+        self.toggl.post(uri, data)
 
 
 class WorkspaceUsers(TogglObject, Update, Delete):
