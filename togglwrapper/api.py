@@ -143,10 +143,10 @@ class Toggl(object):
         return self.post('/reset_token')
 
     @return_json_or_raise_error
-    def get(self, uri):
+    def get(self, uri, params=None):
         """ GET to the given uri. """
         full_uri = '{base}{uri}'.format(base=self.api_url, uri=uri)
-        return requests.get(full_uri, auth=self.auth)
+        return requests.get(full_uri, params=params, auth=self.auth)
 
     @return_json_or_raise_error
     def post(self, uri, data=None):
