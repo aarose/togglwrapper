@@ -2,40 +2,50 @@ import json
 import unittest
 
 from mock import patch
-from requests.exceptions import HTTPError
 
 import api
+from errors import AuthError
 
 
 class TestAPIMethods(unittest.TestCase):
 
     def setUp(self):
         self.api_token = 'fake_token_1'
+        self.toggl = api.Toggl(self.api_token)
+
+    def _get_json(self, filename):
+        """ Return the JSON data contained in the given filename. """
+        with open('json/{}.json'.format(filename)) as json_file:
+            json_data = json.load(json_file)
+            json_file.close()
+        return json_data
 
     def test_client(self):
         """ Should successfully establish the client. """
-        # Grab the JSON response to return
-        with open('json/user_get.json') as json_data:
-            data = json.load(json_data)
-            json_data.close()
-        toggl = api.Client(self.api_token)
-        with patch.object(toggl, 'User') as MockedUser:
-            MockedUser.get.return_value = data
-            response = toggl.User.get()
-            self.assertTrue(response)
-            self.assertEqual(response['data']['api_token'], self.api_token)
+        # TODO: patch futher upstream - in requests, probably.
+        with patch.object(self.toggl, 'User') as MockedUser:
+            MockedUser.get.return_value = self._get_json('user_get')
+            response = self.toggl.User.get()
+        self.assertTrue(response)
+        self.assertEqual(response['data']['api_token'], self.api_token)
 
     def test_client_wrong_token(self):
         """ Should raise exception when wrong API token is provided. """
-        toggl = api.Client(self.api_token)
-        self.assertRaises(HTTPError, toggl.User.get)
-        # Check that the error is a 403 error
+        self.assertRaises(AuthError, self.toggl.User.get)
 
-    def test_update_user(self):
-        """ Should change a property of the User. """
+    def test_client_create(self):
+        """ Should create a new Client. """
+        with patch.object(self.toggl, 'Clients') as MockedClients:
+            MockedClients.create.return_value = self._get_json('client_create')
+            response = self.toggl.Clients.create()
+        self.assertTrue(response)
 
-    def test_update_user_incorrect(self):
-        """ Should raise a 404 error. """
+    def test_client_get(self):
+        """ Should get a specific Client by ID. """
+        with patch.object(self.toggl, 'Clients') as MockedClients:
+            MockedClients.get.return_value = self._get_json('client_get')
+            response = self.toggl.Clients.get()
+        self.assertTrue(response)
 
 
 if __name__ == '__main__':
