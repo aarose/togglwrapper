@@ -33,47 +33,98 @@ class TogglObject(object):
     def __init__(self, toggl):
         self.toggl = toggl
 
-    @return_json_or_raise_error
-    def get(self, object_id=None):
-        """ Get the array of objects, or a specific instance by ID. """
-        uri = self.full_uri
-        if object_id is not None:
-            uri = '{uri}/{object_id}'.format(uri=uri, object_id=object_id)
-        return requests.get(uri, auth=self.client.auth)
 
-    @return_json_or_raise_error
+class Get(object):
+
+    def _compile_uri(self, id=None):
+        uri = self.uri
+        if id is not None:
+            uri += '/%s' % id
+        return uri
+
+    def get_child_objects(self, parent_id, child_uri, params=None):
+        """
+        Get the Objects that belong to the parent Object with the given ID.
+
+        Args:
+            parent_id (int): The ID of the parent Object.
+            child_uri (str): The uri of the child Object. e.g. If we wanted
+              the Clients of a Workspace, where the Workspace is the parent
+              object, the child-uri is '/clients'.
+        """
+        uri = self._compile_uri(parent_id) + child_uri
+        return self.toggl.get(uri, params=params)
+
+    def get(self, id=None, params=None):
+        """ Get the array of objects, or a specific instance by ID. """
+        return self.toggl.get(self._compile_uri(id), params=params)
+
+
+class Create(object):
     def create(self, data):
         """ Create a new instance of the object type. """
-        return requests.post(self.full_uri, data=data, auth=self.client.auth)
-
-    @return_json_or_raise_error
-    def update(self, object_id, data):
-        uri = '{uri}/{object_id}'.format(self.full_uri, object_id)
-        return requests.put(uri, auth=self.client.auth)
-
-    @return_json_or_raise_error
-    def delete(self, object_id):
-        uri = '{uri}/{object_id}'.format(self.full_uri, object_id)
-        return requests.delete(uri, auth=self.client.auth)
+        return self.toggl.post(self.uri, data)
 
 
-class Clients(TogglObject):
+class Update(object):
+    def update(self, id=None, ids=None, data=None):
+        """ Update a specific instance by ID, or update multiple instances. """
+        if not any(id, ids) or (id and ids):
+            raise Exception('Must provide either an ID or an iterable of IDs.')
+        if id is not None:
+            uri = '{uri}/{id}'.format(self.uri, id)
+        else:
+            uri = '{uri}/{ids}'.format(uri=self.uri, ids=','.join(ids))
+        return self.toggl.put(uri, data)
+
+
+class Delete(object):
+    def delete(self, id):
+        """ Delete a specific instance by ID. """
+        uri = '{uri}/{id}'.format(self.uri, id)
+        return self.toggl.delete(uri)
+
+
+class Clients(TogglObject, Get, Create, Update, Delete):
     uri = '/clients'
 
+    def get_projects(self, client_id, active=True):
+        """
+        Get the projects associated with the Client with the given ID.
 
-class Projects(TogglObject):
+        Args:
+            client_id (int): The ID of the client.
+            active (bool or string, optional): Must be either True, False, or
+                the string 'both'. Defaults to True.
+        """
+        cond1 = (active is True)
+        cond2 = (active is False)
+        cond3 = (active is 'both')
+        if not any(cond1, cond2, cond3):
+            raise Exception("The 'active' param must be either True, False,",
+                            "or 'both'.")
+        params = {'active': active}
+        return self.get_child_objects(client_id, '/projects', params=params)
+
+    def get(self, workspace_id):
+        """ Get the Dashboard for the Workspace with the given ID. """
+        return super(Dashboard, self).get(id=workspace_id)
+
+
+class Projects(TogglObject, Get, Create, Update, Delete):
     uri = '/projects'
 
 
-class ProjectUsers(TogglObject):
+class ProjectUsers(TogglObject, Create, Update, Delete):
     uri = '/project_users'
 
 
-class Tags(TogglObject):
+
+class Tags(TogglObject, Create, Update, Delete):
     uri = '/tags'
 
 
-class Tasks(TogglObject):
+class Tasks(TogglObject, Get, Create, Update, Delete):
     uri = '/tasks'
 
 
@@ -81,19 +132,26 @@ class TimeEntries(TogglObject):
     uri = '/time_entires'
 
 
-class User(TogglObject):
-    uri = '/me'
+class TimeEntries(TogglObject, Get, Create, Update, Delete):
+    uri = '/time_entries'
 
-    def _compile_query(self, related_data=False, since=None):
-        """ Returns the querystring. """
-        query = '?with_related_data=true' if related_data else ''
-        if related_data and since is not None:
-            query += '&'
-        if since is not None:
-            query += '?since={}'.format(since)
-        return query
+    def get(self, id=None, start_date=None, end_date=None):
+        """ Get the time entry. """
+        params = {'start_date': start_date, 'end_date': end_date}
+        return super(TimeEntries, self).get(id=id, params=params)
 
-    @return_json_or_raise_error
+    def start(self, data):
+        """ Start a new time entry. """
+        uri = self.uri + '/start'
+        return self.toggl.post(uri, data)
+
+    def stop(self, time_entry_id):
+        """ Stop the time entry with the given ID. """
+        uri = self.uri + '/{time_entry_id}'
+        return self.toggl.post(uri.format(time_entry_id=time_entry_id))
+
+
+
     def get(self, related_data=False, since=None):
         """ Get the user associated with the current API token. """
         query = self._compile_query(related_data=related_data, since=since)
@@ -101,15 +159,15 @@ class User(TogglObject):
         return requests.get(uri, auth=self.client.auth)
 
     def update(self, data):
-        """ Update the fields. """
-        return requests.put(self.full_uri, data=data, auth=self.client.auth)
+        """ Update the user associated with the api token. """
+        return self.toggl.put(self.uri, data)
 
 
-class Workspaces(TogglObject):
+class Workspaces(TogglObject, Get, Update):
     uri = '/workspaces'
 
 
-class WorkspaceUsers(TogglObject):
+class WorkspaceUsers(TogglObject, Update, Delete):
     uri = '/workspace_users'
 
 
