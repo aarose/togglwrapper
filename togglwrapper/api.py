@@ -3,6 +3,8 @@ import json
 import requests
 from requests.auth import HTTPBasicAuth
 
+from errors import AuthError
+
 
 BASE_URL = 'https://www.toggl.com/api'
 API_VERSION = 'v8'
@@ -16,6 +18,8 @@ def return_json_or_raise_error(func):
             return response.json()
         except ValueError:
             # JSON couldn't be decoded, raise status error
+            if response.status_code == 403:
+                raise AuthError('Incorrect API token.')
             response.raise_for_status()
     return inner
 
