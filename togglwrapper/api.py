@@ -25,12 +25,13 @@ def return_json_or_raise_error(func):
 
 
 class TogglObject(object):
+
     @property
     def full_uri(self):
         return '{api}{uri}'.format(api=self.client.api_url, uri=self.uri)
 
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, toggl):
+        self.toggl = toggl
 
     @return_json_or_raise_error
     def get(self, object_id=None):
@@ -112,7 +113,7 @@ class WorkspaceUsers(TogglObject):
     uri = '/workspace_users'
 
 
-class Client(object):
+class Toggl(object):
     def __init__(self, api_token, base_url=BASE_URL, version=API_VERSION):
         self.api_url = '{base}/{version}'.format(base=base_url,
                                                  version=version)
