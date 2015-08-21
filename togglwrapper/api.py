@@ -92,7 +92,7 @@ class Clients(TogglObject, Get, Create, Update, Delete):
         cond1 = (active is True)
         cond2 = (active is False)
         cond3 = (active is 'both')
-        if not any(cond1, cond2, cond3):
+        if not any((cond1, cond2, cond3)):
             raise Exception("The 'active' param must be either True, False,",
                             "or 'both'.")
         params = {'active': active}
