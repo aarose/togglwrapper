@@ -69,8 +69,8 @@ class TestClients(TestTogglBase):
     @responses.activate
     def test_get_by_id(self):
         """ Should get a specific Client by ID. """
-        client_id = 1239455
-        full_url = '{url}/{id}'.format(url=self.full_url, id=client_id)
+        inst_id = 1239455
+        full_url = '{url}/{id}'.format(url=self.full_url, id=inst_id)
         responses.add(
             responses.GET,
             full_url,
@@ -79,7 +79,7 @@ class TestClients(TestTogglBase):
             content_type='application/json'
         )
 
-        response = self.toggl.Clients.get(id=client_id)
+        response = self.toggl.Clients.get(id=inst_id)
         self.assertTrue(response)
         self.assertEqual(len(responses.calls), 1)
 
@@ -101,8 +101,8 @@ class TestClients(TestTogglBase):
     @responses.activate
     def test_update(self):
         """ Should update a Client. """
-        client_id = 1239455
-        full_url = '{url}/{id}'.format(url=self.full_url, id=client_id)
+        inst_id = 1239455
+        full_url = '{url}/{id}'.format(url=self.full_url, id=inst_id)
         responses.add(
             responses.PUT,
             full_url,
@@ -117,26 +117,26 @@ class TestClients(TestTogglBase):
                 "notes": "something about the client"
             }
         }
-        response = self.toggl.Clients.update(id=client_id, data=update_data)
+        response = self.toggl.Clients.update(id=inst_id, data=update_data)
         self.assertTrue(response)
         self.assertEqual(len(responses.calls), 1)
 
     @responses.activate
     def test_delete(self):
         """ Should delete a Client. """
-        client_id = 1239455
-        full_url = '{url}/{id}'.format(url=self.full_url, id=client_id)
+        inst_id = 1239455
+        full_url = '{url}/{id}'.format(url=self.full_url, id=inst_id)
         responses.add(responses.DELETE, full_url, status=200)
 
-        response = self.toggl.Clients.delete(client_id)
+        response = self.toggl.Clients.delete(inst_id)
         self.assertTrue(response)
         self.assertEqual(len(responses.calls), 1)
 
     @responses.activate
     def test_projects_get(self):
         """ Should get all active projects under the Client. """
-        client_id = 1239455
-        url = '{url}/{id}/projects'.format(url=self.full_url, id=client_id)
+        inst_id = 1239455
+        url = '{url}/{id}/projects'.format(url=self.full_url, id=inst_id)
         responses.add(
             responses.GET,
             url,
@@ -145,7 +145,139 @@ class TestClients(TestTogglBase):
             content_type='application/json'
         )
 
-        response = self.toggl.Clients.get_projects(client_id)
+        response = self.toggl.Clients.get_projects(inst_id)
+        self.assertTrue(response)
+        self.assertEqual(len(responses.calls), 1)
+
+
+class TestDashboard(TestTogglBase):
+    focus_class = api.Dashboard
+
+    @responses.activate
+    def test_get(self):
+        """ Should get the dashboard info for a given Workspace. """
+        inst_id = 3134975
+        full_url = '{url}/{id}'.format(url=self.full_url, id=inst_id)
+        responses.add(
+            responses.GET,
+            full_url,
+            body=self.get_json('dashboard'),
+            status=200,
+            content_type='application/json'
+        )
+
+        response = self.toggl.Dashboard.get(inst_id)
+        self.assertTrue(response)
+        self.assertEqual(len(responses.calls), 1)
+
+
+class TestProjects(TestTogglBase):
+    focus_class = api.Projects
+
+    @responses.activate
+    def test_create(self):
+        """ Should create a new Project. """
+        responses.add(
+            responses.POST,
+            self.full_url,
+            body=self.get_json('project_create'),
+            status=200,
+            content_type='application/json'
+        )
+
+        project_data = {"project": {
+            "name": "An awesome project",
+            "wid": 777,
+            "template_id": 10237,
+            "is_private": True,
+            "cid": 123397
+        }}
+        response = self.toggl.Projects.create(project_data)
+        self.assertTrue(response)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_get(self):
+        """ Should get a specific Project by ID. """
+        inst_id = 193838628
+        full_url = '{url}/{id}'.format(url=self.full_url, id=inst_id)
+        responses.add(
+            responses.GET,
+            full_url,
+            body=self.get_json('project_get'),
+            status=200,
+            content_type='application/json'
+        )
+
+        response = self.toggl.Projects.get(inst_id)
+        self.assertTrue(response)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_update(self):
+        """ Should update a Project. """
+        inst_id = 193838628
+        full_url = '{url}/{id}'.format(url=self.full_url, id=inst_id)
+        responses.add(
+            responses.PUT,
+            full_url,
+            body=self.get_json('project_update'),
+            status=200,
+            content_type='application/json'
+        )
+
+        update_data = {"project": {
+            "name": "Changed the name",
+            "is_private": False,
+            "cid": 123398,
+            "color": "6"
+        }}
+        response = self.toggl.Projects.update(id=inst_id, data=update_data)
+        self.assertTrue(response)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_delete(self):
+        """ Should delete a Project. """
+        inst_id = 4692190
+        full_url = '{url}/{id}'.format(url=self.full_url, id=inst_id)
+        responses.add(responses.DELETE, full_url, status=200)
+
+        response = self.toggl.Projects.delete(inst_id)
+        self.assertTrue(response)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_project_users_get(self):
+        """ Should get Project Users under the Project. """
+        inst_id = 193838628
+        url = '{url}/{id}/project_users'.format(url=self.full_url, id=inst_id)
+        responses.add(
+            responses.GET,
+            url,
+            body=self.get_json('project_projectusers_get'),
+            status=200,
+            content_type='application/json'
+        )
+
+        response = self.toggl.Projects.get_project_users(inst_id)
+        self.assertTrue(response)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_tasks_get(self):
+        """ Should get Tasks under the Project. """
+        inst_id = 777
+        url = '{url}/{id}/tasks'.format(url=self.full_url, id=inst_id)
+        responses.add(
+            responses.GET,
+            url,
+            body=self.get_json('project_tasks_get'),
+            status=200,
+            content_type='application/json'
+        )
+
+        response = self.toggl.Projects.get_tasks(inst_id)
         self.assertTrue(response)
         self.assertEqual(len(responses.calls), 1)
 
