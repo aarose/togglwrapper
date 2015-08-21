@@ -1,0 +1,18 @@
+[
+    {
+        "id":4692190,
+        "pid":777,
+        "uid":123,
+        "wid":99,
+        "manager":true,
+        "rate":4
+    },
+    {
+        "id":4692193,
+        "pid":777,
+        "uid":125,
+        "wid":99,
+        "manager":false,
+        "rate":4
+    }
+]
