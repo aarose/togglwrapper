@@ -3,27 +3,12 @@ import json
 import requests
 from requests.auth import HTTPBasicAuth
 
-from errors import AuthError
+from .decorators import error_checking, return_json
 
 
 BASE_URL = 'https://www.toggl.com/api'
 API_VERSION = 'v8'
 API_URL = '{base}/{version}'.format(base=BASE_URL, version=API_VERSION)
-
-
-def return_json_or_raise_error(func):
-    def inner(*args, **kwargs):
-        response = func(*args, **kwargs)
-        try:
-            return response.json()
-        except ValueError, e:
-            if response.ok:
-                raise e
-            # JSON couldn't be decoded, raise status error
-            if response.status_code == 403:
-                raise AuthError('Incorrect API token.')
-            response.raise_for_status()
-    return inner
 
 
 class TogglObject(object):
@@ -71,19 +56,24 @@ class Create(object):
 class Update(object):
     def update(self, id=None, ids=None, data=None):
         """ Update a specific instance by ID, or update multiple instances. """
-        if not any(id, ids) or (id and ids):
+        if not any((id, ids)) or (id and ids):
             raise Exception('Must provide either an ID or an iterable of IDs.')
         if id is not None:
-            uri = '{uri}/{id}'.format(self.uri, id)
+            uri = '{uri}/{id}'.format(uri=self.uri, id=id)
         else:
             uri = '{uri}/{ids}'.format(uri=self.uri, ids=','.join(ids))
         return self.toggl.put(uri, data)
 
 
 class Delete(object):
-    def delete(self, id):
-        """ Delete a specific instance by ID. """
-        uri = '{uri}/{id}'.format(self.uri, id)
+    def delete(self, id=None, ids=None):
+        """ Delete a specific instance by ID, or delete multiple instances. """
+        if not any((id, ids)) or (id and ids):
+            raise Exception('Must provide either an ID or an iterable of IDs.')
+        if id is not None:
+            uri = '{uri}/{id}'.format(uri=self.uri, id=id)
+        else:
+            uri = '{uri}/{ids}'.format(uri=self.uri, ids=','.join(ids))
         return self.toggl.delete(uri)
 
 
@@ -254,28 +244,31 @@ class Toggl(object):
         """ Delete the current API Token and use a new token. """
         return self.post('/reset_token')
 
-    @return_json_or_raise_error
+    @return_json
+    @error_checking
     def get(self, uri, params=None):
         """ GET to the given uri. """
         full_uri = '{base}{uri}'.format(base=self.api_url, uri=uri)
         return requests.get(full_uri, params=params, auth=self.auth)
 
-    @return_json_or_raise_error
+    @return_json
+    @error_checking
     def post(self, uri, data=None):
         """ POST to the given uri with a data dict. """
         full_uri = '{base}{uri}'.format(base=self.api_url, uri=uri)
         payload = json.dumps(data) if data is not None else None
         return requests.post(full_uri, data=payload, auth=self.auth)
 
-    @return_json_or_raise_error
+    @return_json
+    @error_checking
     def put(self, uri, data):
         """ PUT to the given uri with a data dict. """
         full_uri = '{base}{uri}'.format(base=self.api_url, uri=uri)
         payload = json.dumps(data)
         return requests.put(full_uri, data=payload, auth=self.auth)
 
-    @return_json_or_raise_error
+    @error_checking
     def delete(self, uri):
         """ DELETE to the given uri. """
-        full_uri = '{base}{uri}'.format(self.api_url, uri)
+        full_uri = '{base}{uri}'.format(base=self.api_url, uri=uri)
         return requests.delete(full_uri, auth=self.auth)
