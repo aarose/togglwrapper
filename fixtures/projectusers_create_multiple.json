@@ -1,0 +1,26 @@
+{
+    "data":[
+        {
+            "id":4692190,
+            "pid":777,
+            "uid":1267998,
+            "wid":99,
+            "manager":true,
+            "rate":4,
+        },{
+            "id":4692192,
+            "pid":777,
+            "uid":29624,
+            "wid":99,
+            "manager":true,
+            "rate":4,
+        },{
+            "id":4692191,
+            "pid":777,
+            "uid":112047,
+            "wid":99,
+            "manager":true,
+            "rate":4,
+        }
+    ]
+}
