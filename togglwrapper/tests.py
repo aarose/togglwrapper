@@ -21,7 +21,7 @@ class TestTogglBase(unittest.TestCase):
 
     def get_json(self, filename):
         """ Return the JSON data contained in the given filename as a dict. """
-        with open('json/{}.json'.format(filename)) as json_file:
+        with open('fixtures/{}.json'.format(filename)) as json_file:
             json_dict = json.load(json_file)
             json_file.close()
         return json.dumps(json_dict)
@@ -78,13 +78,62 @@ class TestClients(TestTogglBase):
         self.assertTrue(response)
         self.assertEqual(len(responses.calls), 1)
 
+    @responses.activate
+    def test_get(self):
+        """ Should get all Clients. """
+        responses.add(
+            responses.GET,
+            self.full_url,
+            body=self.get_json('clients_get'),
+            status=200,
+            content_type='application/json'
+        )
+
+        response = self.toggl.Clients.get()
+        self.assertTrue(response)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_update(self):
+        """ Should update a Client. """
+        client_id = 1239455
+        full_url = '{url}/{id}'.format(url=self.full_url, id=client_id)
+        responses.add(
+            responses.PUT,
+            full_url,
+            body=self.get_json('client_update'),
+            status=200,
+            content_type='application/json'
+        )
+
+        update_data = {
+            "client": {
+                "name": "Very Big Company",
+                "notes": "something about the client"
+            }
+        }
+        response = self.toggl.Clients.update(id=client_id, data=update_data)
+        self.assertTrue(response)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_delete(self):
+        """ Should delete a Client. """
+        client_id = 1239455
+        full_url = '{url}/{id}'.format(url=self.full_url, id=client_id)
+        responses.add(responses.DELETE, full_url, status=200)
+
+        response = self.toggl.Clients.delete(client_id)
+        self.assertTrue(response)
+        self.assertEqual(len(responses.calls), 1)
+
 
 class TestUser(TestTogglBase):
     focus_class = api.User
 
     @responses.activate
     def test_get(self):
-        """ Should successfully establish the client. """
+        """ Should successfully get the User associated with the token. """
         responses.add(
             responses.GET,
             self.full_url,
