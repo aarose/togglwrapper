@@ -1,13 +1,15 @@
 import json
+import os
 import unittest
 
 import responses
 
-import api
-from errors import AuthError
+from togglwrapper import api
+from togglwrapper.exceptions import AuthError
 
 
 FAKE_TOKEN = 'fake_token_1'
+FIXTURES_PATH = '%s/fixtures' % os.path.dirname(os.path.abspath(__file__))
 
 
 class TestTogglBase(unittest.TestCase):
@@ -20,11 +22,14 @@ class TestTogglBase(unittest.TestCase):
         self.toggl = api.Toggl(self.api_token)
 
     def get_json(self, filename):
-        """ Return the JSON data contained in the given filename as a dict. """
-        with open('fixtures/{}.json'.format(filename)) as json_file:
+        """ Return the JSON data in the .json file with the given filename. """
+        file_path = '{path}/{filename}.json'.format(path=FIXTURES_PATH,
+                                                    filename=filename)
+        with open(file_path) as json_file:
             json_dict = json.load(json_file)
             json_file.close()
-        return json.dumps(json_dict)
+        raw_json = json.dumps(json_dict)
+        return raw_json
 
     @property
     def full_url(self):
@@ -148,5 +153,6 @@ class TestUser(TestTogglBase):
         self.assertEqual(len(responses.calls), 1)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__' and __package__ is None:
+    __package__ = "toggl"
     unittest.main()
