@@ -132,6 +132,23 @@ class TestClients(TestTogglBase):
         self.assertTrue(response)
         self.assertEqual(len(responses.calls), 1)
 
+    @responses.activate
+    def test_projects_get(self):
+        """ Should get all active projects under the Client. """
+        client_id = 1239455
+        url = '{url}/{id}/projects'.format(url=self.full_url, id=client_id)
+        responses.add(
+            responses.GET,
+            url,
+            body=self.get_json('client_projects_get'),
+            status=200,
+            content_type='application/json'
+        )
+
+        response = self.toggl.Clients.get_projects(client_id)
+        self.assertTrue(response)
+        self.assertEqual(len(responses.calls), 1)
+
 
 class TestUser(TestTogglBase):
     focus_class = api.User
