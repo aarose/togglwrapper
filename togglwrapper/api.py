@@ -29,7 +29,7 @@ class Get(object):
             uri += '/%s' % id
         return uri
 
-    def get_child_objects(self, parent_id, child_uri, params=None):
+    def _get_child_objects(self, parent_id, child_uri, params=None):
         """
         Get the Objects that belong to the parent Object with the given ID.
 
@@ -96,7 +96,7 @@ class Clients(TogglObject, Get, Create, Update, Delete):
             raise Exception("The 'active' param must be either True, False,",
                             "or 'both'.")
         params = {'active': active}
-        return self.get_child_objects(client_id, '/projects', params=params)
+        return self._get_child_objects(client_id, '/projects', params=params)
 
 
 class Dashboard(TogglObject, Get):
@@ -116,11 +116,11 @@ class Projects(TogglObject, Get, Create, Update, Delete):
 
     def get_project_users(self, project_id):
         """ Get the ProjectUsers for the Project with the given ID. """
-        return self.get_child_objects(project_id, '/project_users')
+        return self._get_child_objects(project_id, '/project_users')
 
     def get_tasks(self, project_id):
         """ Get the Tasks for the Project with the given ID. """
-        return self.get_child_objects(project_id, '/tasks')
+        return self._get_child_objects(project_id, '/tasks')
 
 
 class ProjectUsers(TogglObject, Create, Update, Delete):
@@ -183,27 +183,27 @@ class Workspaces(TogglObject, Get, Update):
 
     def get_users(self, workspace_id):
         """ Get the Users for the Workspace with the given ID. """
-        return self.get_child_objects(workspace_id, '/users')
+        return self._get_child_objects(workspace_id, '/users')
 
     def get_clients(self, workspace_id):
         """ Get the Clients for the Workspace with the given ID. """
-        return self.get_child_objects(workspace_id, '/clients')
+        return self._get_child_objects(workspace_id, '/clients')
 
     def get_projects(self, workspace_id):
         """ Get the Projects for the Workspace with the given ID. """
-        return self.get_child_objects(workspace_id, '/projects')
+        return self._get_child_objects(workspace_id, '/projects')
 
     def get_tasks(self, workspace_id):
         """ Get the Tasks for the Workspace with the given ID. """
-        return self.get_child_objects(workspace_id, '/tasks')
+        return self._get_child_objects(workspace_id, '/tasks')
 
     def get_tags(self, workspace_id):
         """ Get the Tags for the Workspace with the given ID. """
-        return self.get_child_objects(workspace_id, '/tags')
+        return self._get_child_objects(workspace_id, '/tags')
 
     def get_workspace_users(self, workspace_id):
         """ Get the Tags for the Workspace with the given ID. """
-        return self.get_child_objects(workspace_id, '/workspace_users')
+        return self._get_child_objects(workspace_id, '/workspace_users')
 
     def invite(self, workspace_id, data):
         """ add users to workspace. """
