@@ -221,7 +221,7 @@ class Toggl(object):
                                                  version=version)
         self.auth = HTTPBasicAuth(api_token, 'api_token')
         self.Clients = Clients(self)
-        self.User = User(self)
+        self.Dashboard = Dashboard(self)
         self.Projects = Projects(self)
         self.ProjectUsers = ProjectUsers(self)
         self.Tags = Tags(self)
