@@ -16,7 +16,9 @@ def return_json_or_raise_error(func):
         response = func(*args, **kwargs)
         try:
             return response.json()
-        except ValueError:
+        except ValueError, e:
+            if response.ok:
+                raise e
             # JSON couldn't be decoded, raise status error
             if response.status_code == 403:
                 raise AuthError('Incorrect API token.')
