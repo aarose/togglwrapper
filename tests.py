@@ -73,7 +73,8 @@ class TestClients(TestTogglBase):
         self.responses_add('POST', filename='client_create')
         new_client_data = {"client": {"name": "Very Big Company", "wid": 777}}
         response = self.toggl.Clients.create(new_client_data)
-        self.assertTrue(response)
+        self.assertEqual(type(response), dict)
+        print response
         self.assertEqual(len(responses.calls), 1)
 
     @responses.activate
@@ -233,6 +234,91 @@ class TestProjects(TestTogglBase):
         )
         response = self.toggl.Projects.get_tasks(inst_id)
         self.assertTrue(response)
+        self.assertEqual(len(responses.calls), 1)
+
+
+class TestProjectUsers(TestTogglBase):
+    focus_class = api.ProjectUsers
+
+    @responses.activate
+    def test_create(self):
+        """ Should create a new ProjectUser. """
+        self.responses_add('POST', filename='projectuser_create')
+        create_data = {
+            "project_user": {
+                "pid": 777,
+                "uid": 123,
+                "rate": 4.0,
+                "manager": True
+            }
+        }
+        response = self.toggl.ProjectUsers.create(create_data)
+        self.assertTrue(response)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_update(self):
+        """ Should update a ProjectUser. """
+        inst_id = 4692190
+        self.responses_add('PUT', filename='projectuser_update', id=inst_id)
+        update_data = {
+            "project_user": {
+                "manager": False,
+                "rate": 15,
+                "fields": "fullname"
+            }
+        }
+        response = self.toggl.ProjectUsers.update(id=inst_id, data=update_data)
+        self.assertTrue(response)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_delete(self):
+        """ Should delete a ProjectUser. """
+        inst_id = 4692190
+        self.responses_add('DELETE', id=inst_id)
+        response = self.toggl.ProjectUsers.delete(inst_id)
+        self.assertTrue(response)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_mass_create(self):
+        """ Should create multiple new ProjectUsers. """
+        self.responses_add('POST', 'projectusers_create_multiple')
+        create_data = {"project_user": {
+            "pid": 777,
+            "uid": "1267998,29624,112047",
+            "rate": 4.0,
+            "manager": True,
+            "fields": "fullname"
+        }}
+        response = self.toggl.ProjectUsers.create(create_data)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_mass_update(self):
+        """ Should update multiple ProjectUsers. """
+        ids = (4692190, 4692192, 4692191)
+        self.responses_add('PUT', 'projectusers_update_multiple', ids=ids)
+        update_data = {
+            "project_user": {
+                "manager": False,
+                "rate": 15,
+                "fields": "fullname"
+            }
+        }
+        response = self.toggl.ProjectUsers.update(ids=ids, data=update_data)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_mass_delete(self):
+        """ Should delete multiple ProjectUsers. """
+        ids = (4692190, 4692192, 4692193)
+        self.responses_add('DELETE', ids=ids)
+        response = self.toggl.ProjectUsers.delete(ids=ids)
+        self.assertTrue(response.ok)
         self.assertEqual(len(responses.calls), 1)
 
 
