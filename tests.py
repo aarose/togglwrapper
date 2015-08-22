@@ -74,7 +74,6 @@ class TestClients(TestTogglBase):
         new_client_data = {"client": {"name": "Very Big Company", "wid": 777}}
         response = self.toggl.Clients.create(new_client_data)
         self.assertEqual(type(response), dict)
-        print response
         self.assertEqual(len(responses.calls), 1)
 
     @responses.activate
