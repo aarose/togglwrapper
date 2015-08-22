@@ -12,6 +12,7 @@ API_URL = '{base}/{version}'.format(base=BASE_URL, version=API_VERSION)
 
 
 class TogglObject(object):
+    uri = None
 
     @property
     def full_uri(self):
@@ -19,15 +20,24 @@ class TogglObject(object):
 
     def __init__(self, toggl):
         self.toggl = toggl
+        if self.uri is None:
+            raise NotImplementedError('Must specify a URI.')
+
+    @classmethod
+    def _compile_uri(cls, id=None, ids=None, sub_uri=None):
+        if id and ids:
+            raise Exception('Cannot use both an ID and an iterable of IDs.')
+        uri = cls.uri
+        if id:
+            uri += '/{}'.format(id)
+        if ids:
+            uri += '/{}'.format(','.join([str(int_id) for int_id in ids]))
+        if sub_uri:
+            uri += sub_uri
+        return uri
 
 
 class Get(object):
-
-    def _compile_uri(self, id=None):
-        uri = self.uri
-        if id is not None:
-            uri += '/%s' % id
-        return uri
 
     def _get_child_objects(self, parent_id, child_uri, params=None):
         """
@@ -39,7 +49,7 @@ class Get(object):
               the Clients of a Workspace, where the Workspace is the parent
               object, the child-uri is '/clients'.
         """
-        uri = self._compile_uri(parent_id) + child_uri
+        uri = self._compile_uri(id=parent_id, sub_uri=child_uri)
         return self.toggl.get(uri, params=params)
 
     def get(self, id=None, params=None):
@@ -56,25 +66,17 @@ class Create(object):
 class Update(object):
     def update(self, id=None, ids=None, data=None):
         """ Update a specific instance by ID, or update multiple instances. """
-        if not any((id, ids)) or (id and ids):
+        if not any((id, ids)):
             raise Exception('Must provide either an ID or an iterable of IDs.')
-        if id is not None:
-            uri = '{uri}/{id}'.format(uri=self.uri, id=id)
-        else:
-            uri = '{uri}/{ids}'.format(uri=self.uri, ids=','.join(ids))
-        return self.toggl.put(uri, data)
+        return self.toggl.put(self._compile_uri(id=id, ids=ids), data)
 
 
 class Delete(object):
     def delete(self, id=None, ids=None):
         """ Delete a specific instance by ID, or delete multiple instances. """
-        if not any((id, ids)) or (id and ids):
+        if not any((id, ids)):
             raise Exception('Must provide either an ID or an iterable of IDs.')
-        if id is not None:
-            uri = '{uri}/{id}'.format(uri=self.uri, id=id)
-        else:
-            uri = '{uri}/{ids}'.format(uri=self.uri, ids=','.join(ids))
-        return self.toggl.delete(uri)
+        return self.toggl.delete(self._compile_uri(id=id, ids=ids))
 
 
 class Clients(TogglObject, Get, Create, Update, Delete):
