@@ -207,7 +207,7 @@ class Workspaces(TogglObject, Get, Update):
         return super(Workspaces, self).get(workspace_id, '/tags')
 
     def get_workspace_users(self, workspace_id):
-        """ Get the Tags for the Workspace with the given ID. """
+        """ Get the WorkspaceUsers for the Workspace with the given ID. """
         return super(Workspaces, self).get(workspace_id, '/workspace_users')
 
     def invite(self, workspace_id, data):
