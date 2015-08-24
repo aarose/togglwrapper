@@ -24,7 +24,7 @@ class TogglObject(object):
             raise NotImplementedError('Must specify a URI.')
 
     @classmethod
-    def _compile_uri(cls, id=None, ids=None, sub_uri=None):
+    def _compile_uri(cls, id=None, ids=None, child_uri=None):
         if id and ids:
             raise Exception('Cannot use both an ID and an iterable of IDs.')
         uri = cls.uri
@@ -32,29 +32,30 @@ class TogglObject(object):
             uri += '/{}'.format(id)
         if ids:
             uri += '/{}'.format(','.join([str(int_id) for int_id in ids]))
-        if sub_uri:
-            uri += sub_uri
+        if child_uri:
+            uri += child_uri
         return uri
 
 
 class Get(object):
 
-    def _get_child_objects(self, parent_id, child_uri, params=None):
+    def get(self, id=None, child_uri=None, params=None):
         """
-        Get the Objects that belong to the parent Object with the given ID.
+        Get the array of objects, or a specific instance by ID.
 
         Args:
-            parent_id (int): The ID of the parent Object.
-            child_uri (str): The uri of the child Object. e.g. If we wanted
-              the Clients of a Workspace, where the Workspace is the parent
-              object, the child-uri is '/clients'.
+            id (int, optional): The ID of a specific instance of the Object.
+                Defaults to None.
+            child_uri (str, optional): The URI of the child Object or subpath.
+                e.g. If we wanted the Clients of a Workspace, where the
+                Workspace is the parent object, the child URI is '/clients'.
+                Defaults to None.
+            params (dict, optional): The dictionary of additional params to
+                include in as the querystring, appended to the URL. Defaults
+                to None.
         """
-        uri = self._compile_uri(id=parent_id, sub_uri=child_uri)
+        uri = self._compile_uri(id, child_uri=child_uri)
         return self.toggl.get(uri, params=params)
-
-    def get(self, id=None, params=None):
-        """ Get the array of objects, or a specific instance by ID. """
-        return self.toggl.get(self._compile_uri(id), params=params)
 
 
 class Create(object):
@@ -64,11 +65,10 @@ class Create(object):
 
 
 class Update(object):
-    def update(self, id=None, ids=None, data=None):
+    def update(self, id=None, ids=None, child_uri=None, data=None):
         """ Update a specific instance by ID, or update multiple instances. """
-        if not any((id, ids)):
-            raise Exception('Must provide either an ID or an iterable of IDs.')
-        return self.toggl.put(self._compile_uri(id=id, ids=ids), data)
+        uri = self._compile_uri(id=id, ids=ids, child_uri=child_uri)
+        return self.toggl.put(uri, data)
 
 
 class Delete(object):
@@ -98,7 +98,7 @@ class Clients(TogglObject, Get, Create, Update, Delete):
             raise Exception("The 'active' param must be either True, False,",
                             "or 'both'.")
         params = {'active': active}
-        return self._get_child_objects(client_id, '/projects', params=params)
+        return super(Clients, self).get(client_id, '/projects', params=params)
 
 
 class Dashboard(TogglObject, Get):
@@ -118,11 +118,11 @@ class Projects(TogglObject, Get, Create, Update, Delete):
 
     def get_project_users(self, project_id):
         """ Get the ProjectUsers for the Project with the given ID. """
-        return self._get_child_objects(project_id, '/project_users')
+        return super(Projects, self).get(project_id, '/project_users')
 
     def get_tasks(self, project_id):
         """ Get the Tasks for the Project with the given ID. """
-        return self._get_child_objects(project_id, '/tasks')
+        return super(Projects, self).get(project_id, '/tasks')
 
 
 class ProjectUsers(TogglObject, Create, Update, Delete):
@@ -141,7 +141,7 @@ class Tasks(TogglObject, Get, Create, Update, Delete):
     uri = '/tasks'
 
     def get(self, tag_id):
-        return super(Projects, self).get(id=tag_id)
+        return super(Tasks, self).get(id=tag_id)
 
     def get_for_project(self, project_id):
         """ Get the Tasks for the Project with the given ID. """
@@ -158,16 +158,19 @@ class TimeEntries(TogglObject, Get, Create, Update, Delete):
 
     def start(self, data):
         """ Start a new time entry. """
-        uri = self.uri + '/start'
-        return self.toggl.post(uri, data)
+        return super(TimeEntries, self).update(child_uri='/start', data=data)
 
     def stop(self, time_entry_id):
         """ Stop the time entry with the given ID. """
-        uri = self.uri + '/{time_entry_id}'
-        return self.toggl.post(uri.format(time_entry_id=time_entry_id))
+        return super(TimeEntries, self).update(id=time_entry_id,
+                                               child_uri='/stop')
+
+    def get_current(self):
+        """ Get the current running time entry. """
+        return super(TimeEntries, self).get(child_uri='/current')
 
 
-class User(TogglObject, Get):
+class User(TogglObject, Get, Update):
     uri = '/me'
 
     def get(self, related_data=False, since=None):
@@ -177,7 +180,7 @@ class User(TogglObject, Get):
 
     def update(self, data):
         """ Update the user associated with the api token. """
-        return self.toggl.put(self.uri, data)
+        return super(User, self).update(data=data)
 
 
 class Workspaces(TogglObject, Get, Update):
@@ -185,30 +188,30 @@ class Workspaces(TogglObject, Get, Update):
 
     def get_users(self, workspace_id):
         """ Get the Users for the Workspace with the given ID. """
-        return self._get_child_objects(workspace_id, '/users')
+        return super(Workspaces, self).get(workspace_id, '/users')
 
     def get_clients(self, workspace_id):
         """ Get the Clients for the Workspace with the given ID. """
-        return self._get_child_objects(workspace_id, '/clients')
+        return super(Workspaces, self).get(workspace_id, '/clients')
 
     def get_projects(self, workspace_id):
         """ Get the Projects for the Workspace with the given ID. """
-        return self._get_child_objects(workspace_id, '/projects')
+        return super(Workspaces, self).get(workspace_id, '/projects')
 
     def get_tasks(self, workspace_id):
         """ Get the Tasks for the Workspace with the given ID. """
-        return self._get_child_objects(workspace_id, '/tasks')
+        return super(Workspaces, self).get(workspace_id, '/tasks')
 
     def get_tags(self, workspace_id):
         """ Get the Tags for the Workspace with the given ID. """
-        return self._get_child_objects(workspace_id, '/tags')
+        return super(Workspaces, self).get(workspace_id, '/tags')
 
     def get_workspace_users(self, workspace_id):
         """ Get the Tags for the Workspace with the given ID. """
-        return self._get_child_objects(workspace_id, '/workspace_users')
+        return super(Workspaces, self).get(workspace_id, '/workspace_users')
 
     def invite(self, workspace_id, data):
-        """ add users to workspace. """
+        """ Add users to workspace. """
         uri = '/workspaces/{workspace_id}/invite'.format(workspace_id)
         self.toggl.post(uri, data)
 
