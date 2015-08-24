@@ -4,6 +4,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 from .decorators import error_checking, return_json
+from .mixins import GetMixin, CreateMixin, UpdateMixin, DeleteMixin
 
 
 BASE_URL = 'https://www.toggl.com/api'
@@ -12,12 +13,14 @@ API_URL = '{base}/{version}'.format(base=BASE_URL, version=API_VERSION)
 
 
 class TogglObject(object):
+    """ Base class for Toggl representations to inherit from. """
     uri = None
 
     def __init__(self, toggl):
         self.toggl = toggl
         if self.uri is None:
-            raise NotImplementedError('Must specify a URI.')
+            # Helper error for subclasses that forget to specify their own URI
+            raise NotImplementedError('Must define a URI.')
 
     @classmethod
     def _compile_uri(cls, id=None, ids=None, child_uri=None):
@@ -31,48 +34,6 @@ class TogglObject(object):
         if child_uri:
             uri += child_uri
         return uri
-
-
-class GetMixin(object):
-
-    def get(self, id=None, child_uri=None, params=None):
-        """
-        Get the array of objects, or a specific instance by ID.
-
-        Args:
-            id (int, optional): The ID of a specific instance of the Object.
-                Defaults to None.
-            child_uri (str, optional): The URI of the child Object or subpath.
-                e.g. If we wanted the Clients of a Workspace, where the
-                Workspace is the parent object, the child URI is '/clients'.
-                Defaults to None.
-            params (dict, optional): The dictionary of additional params to
-                include in as the querystring, appended to the URL. Defaults
-                to None.
-        """
-        uri = self._compile_uri(id, child_uri=child_uri)
-        return self.toggl.get(uri, params=params)
-
-
-class CreateMixin(object):
-    def create(self, data):
-        """ Create a new instance of the object type. """
-        return self.toggl.post(self.uri, data)
-
-
-class UpdateMixin(object):
-    def update(self, id=None, ids=None, child_uri=None, data=None):
-        """ Update a specific instance by ID, or update multiple instances. """
-        uri = self._compile_uri(id=id, ids=ids, child_uri=child_uri)
-        return self.toggl.put(uri, data)
-
-
-class DeleteMixin(object):
-    def delete(self, id=None, ids=None):
-        """ Delete a specific instance by ID, or delete multiple instances. """
-        if not any((id, ids)):
-            raise Exception('Must provide either an ID or an iterable of IDs.')
-        return self.toggl.delete(self._compile_uri(id=id, ids=ids))
 
 
 class Clients(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
@@ -235,14 +196,14 @@ class Toggl(object):
         self.Workspaces = Workspaces(self)
         self.WorkspaceUsers = WorkspaceUsers(self)
 
-    def signups(self, user_info):
+    def signups(self, data):
         """
         Create a new user.
 
         Args:
-          user_info (dict): Values for all the required and optional fields.
+          data (dict): Contains required and optional fields and values.
         """
-        return self.post('/signups', {'user': user_info})
+        return self.post('/signups', data)
 
     def reset_token(self):
         """ Delete the current API Token and use a new token. """
