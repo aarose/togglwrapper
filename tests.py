@@ -18,9 +18,10 @@ class TestTogglBase(unittest.TestCase):
     api_token = FAKE_TOKEN
     focus_class = None
 
-    def compile_full_url(self, id=None, ids=None, sub_uri=None):
+    def compile_full_url(self, id=None, ids=None, child_uri=None):
         """ Compile a full URL from the base url. """
-        uri = self.focus_class._compile_uri(id=id, ids=ids, sub_uri=sub_uri)
+        focus_class = self.focus_class
+        uri = focus_class._compile_uri(id=id, ids=ids, child_uri=child_uri)
         return self.toggl.api_url + uri
 
     def setUp(self):
@@ -37,7 +38,7 @@ class TestTogglBase(unittest.TestCase):
         return raw_json
 
     def responses_add(self, method, filename=None, id=None, ids=None,
-                      sub_uri=None, status_code=200, content_type=''):
+                      child_uri=None, status_code=200, content_type=''):
         """ Adds a mock response for requests to a certain url. """
         body = None
         if filename is not None:
@@ -46,7 +47,7 @@ class TestTogglBase(unittest.TestCase):
 
         responses.add(
             getattr(responses, method),
-            self.compile_full_url(id=id, ids=ids, sub_uri=sub_uri),
+            self.compile_full_url(id=id, ids=ids, child_uri=child_uri),
             body=body,
             status=status_code,
             content_type=content_type
@@ -82,7 +83,7 @@ class TestClients(TestTogglBase):
         inst_id = 1239455
         self.responses_add('GET', filename='client_get', id=inst_id)
         response = self.toggl.Clients.get(id=inst_id)
-        self.assertTrue(response)
+        self.assertEqual(type(response), dict)
         self.assertEqual(len(responses.calls), 1)
 
     @responses.activate
@@ -90,7 +91,7 @@ class TestClients(TestTogglBase):
         """ Should get all Clients. """
         self.responses_add('GET', filename='clients_get')
         response = self.toggl.Clients.get()
-        self.assertTrue(response)
+        self.assertEqual(type(response), list)
         self.assertEqual(len(responses.calls), 1)
 
     @responses.activate
@@ -105,7 +106,7 @@ class TestClients(TestTogglBase):
             }
         }
         response = self.toggl.Clients.update(id=inst_id, data=update_data)
-        self.assertTrue(response)
+        self.assertEqual(type(response), dict)
         self.assertEqual(len(responses.calls), 1)
 
     @responses.activate
@@ -115,7 +116,7 @@ class TestClients(TestTogglBase):
         self.responses_add('DELETE', id=inst_id)
 
         response = self.toggl.Clients.delete(inst_id)
-        self.assertTrue(response)
+        self.assertTrue(response.ok)
         self.assertEqual(len(responses.calls), 1)
 
     @responses.activate
@@ -126,10 +127,10 @@ class TestClients(TestTogglBase):
             'GET',
             filename='client_projects_get',
             id=inst_id,
-            sub_uri='/projects'
+            child_uri='/projects'
         )
         response = self.toggl.Clients.get_projects(inst_id)
-        self.assertTrue(response)
+        self.assertEqual(type(response), list)
         self.assertEqual(len(responses.calls), 1)
 
 
@@ -142,7 +143,7 @@ class TestDashboard(TestTogglBase):
         inst_id = 3134975
         self.responses_add('GET', filename='dashboard', id=inst_id)
         response = self.toggl.Dashboard.get(inst_id)
-        self.assertTrue(response)
+        self.assertEqual(type(response), dict)
         self.assertEqual(len(responses.calls), 1)
 
 
@@ -161,16 +162,16 @@ class TestProjects(TestTogglBase):
             "cid": 123397
         }}
         response = self.toggl.Projects.create(project_data)
-        self.assertTrue(response)
+        self.assertEqual(type(response), dict)
         self.assertEqual(len(responses.calls), 1)
 
     @responses.activate
-    def test_get(self):
+    def test_get_by_id(self):
         """ Should get a specific Project by ID. """
         inst_id = 193838628
         self.responses_add('GET', filename='project_get', id=inst_id)
         response = self.toggl.Projects.get(inst_id)
-        self.assertTrue(response)
+        self.assertEqual(type(response), dict)
         self.assertEqual(len(responses.calls), 1)
 
     @responses.activate
@@ -185,7 +186,7 @@ class TestProjects(TestTogglBase):
             "color": "6"
         }}
         response = self.toggl.Projects.update(id=inst_id, data=update_data)
-        self.assertTrue(response)
+        self.assertEqual(type(response), dict)
         self.assertEqual(len(responses.calls), 1)
 
     @responses.activate
@@ -194,7 +195,7 @@ class TestProjects(TestTogglBase):
         inst_id = 4692190
         self.responses_add('DELETE', id=inst_id)
         response = self.toggl.Projects.delete(inst_id)
-        self.assertTrue(response)
+        self.assertTrue(response.ok)
         self.assertEqual(len(responses.calls), 1)
 
     @responses.activate
@@ -215,10 +216,10 @@ class TestProjects(TestTogglBase):
             'GET',
             filename=fixture_name,
             id=inst_id,
-            sub_uri='/project_users'
+            child_uri='/project_users'
         )
         response = self.toggl.Projects.get_project_users(inst_id)
-        self.assertTrue(response)
+        self.assertEqual(type(response), list)
         self.assertEqual(len(responses.calls), 1)
 
     @responses.activate
@@ -229,10 +230,10 @@ class TestProjects(TestTogglBase):
             'GET',
             filename='project_tasks_get',
             id=inst_id,
-            sub_uri='/tasks'
+            child_uri='/tasks'
         )
         response = self.toggl.Projects.get_tasks(inst_id)
-        self.assertTrue(response)
+        self.assertEqual(type(response), list)
         self.assertEqual(len(responses.calls), 1)
 
 
@@ -252,7 +253,7 @@ class TestProjectUsers(TestTogglBase):
             }
         }
         response = self.toggl.ProjectUsers.create(create_data)
-        self.assertTrue(response)
+        self.assertEqual(type(response), dict)
         self.assertEqual(len(responses.calls), 1)
 
     @responses.activate
@@ -268,7 +269,7 @@ class TestProjectUsers(TestTogglBase):
             }
         }
         response = self.toggl.ProjectUsers.update(id=inst_id, data=update_data)
-        self.assertTrue(response)
+        self.assertEqual(type(response), dict)
         self.assertEqual(len(responses.calls), 1)
 
     @responses.activate
@@ -277,7 +278,7 @@ class TestProjectUsers(TestTogglBase):
         inst_id = 4692190
         self.responses_add('DELETE', id=inst_id)
         response = self.toggl.ProjectUsers.delete(inst_id)
-        self.assertTrue(response)
+        self.assertTrue(response.ok)
         self.assertEqual(len(responses.calls), 1)
 
     @responses.activate
@@ -321,6 +322,224 @@ class TestProjectUsers(TestTogglBase):
         self.assertEqual(len(responses.calls), 1)
 
 
+class TestTags(TestTogglBase):
+    focus_class = api.Tags
+
+    @responses.activate
+    def test_create(self):
+        """ Should create a new Tag. """
+        self.responses_add('POST', filename='tag_create')
+        create_data = {"tag": {"name": "billed", "wid": 777}}
+        response = self.toggl.Tags.create(create_data)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_update(self):
+        """ Should update a Tag. """
+        inst_id = 1239455
+        self.responses_add('PUT', filename='tag_update', id=inst_id)
+        update_data = {"tag": {"name": "not billed"}}
+        response = self.toggl.Tags.update(id=inst_id, data=update_data)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_delete(self):
+        """ Should delete a Tag. """
+        inst_id = 1239455
+        self.responses_add('DELETE', id=inst_id)
+        response = self.toggl.Tags.delete(inst_id)
+        self.assertTrue(response.ok)
+        self.assertEqual(len(responses.calls), 1)
+
+
+class TestTasks(TestTogglBase):
+    focus_class = api.Tasks
+
+    @responses.activate
+    def test_create(self):
+        """ Should create a new Task. """
+        self.responses_add('POST', filename='task_create')
+        create_data = {"task": {"name": "A new task", "pid": 777}}
+        response = self.toggl.Tasks.create(create_data)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_get_by_id(self):
+        """ Should get a Task. """
+        inst_id = 1335076912
+        self.responses_add('GET', filename='task_get', id=inst_id)
+        response = self.toggl.Tasks.get(inst_id)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_update(self):
+        """ Should update a Task. """
+        inst_id = 1335076912
+        self.responses_add('PUT', filename='task_update', id=inst_id)
+        update_data = {
+            "task": {
+                "active": False,
+                "estimated_seconds": 3600,
+                "fields": "done_seconds,uname"
+            }
+        }
+        response = self.toggl.Tasks.update(id=inst_id, data=update_data)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_delete(self):
+        """ Should delete a Task. """
+        inst_id = 1335076912
+        self.responses_add('DELETE', id=inst_id)
+        response = self.toggl.Tasks.delete(inst_id)
+        self.assertTrue(response.ok)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_mass_update(self):
+        """ Should update multiple Tasks. """
+        ids = (1335076912, 1335076911)
+        self.responses_add('PUT', 'projectusers_update_multiple', ids=ids)
+        update_data = {"task": {
+            "active": False,
+            "fields": "done_seconds,uname"
+        }}
+        response = self.toggl.Tasks.update(ids=ids, data=update_data)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_mass_delete(self):
+        """ Should delete multiple Tasks. """
+        ids = (1335076912, 1335076911, 1335076910)
+        self.responses_add('DELETE', ids=ids)
+        response = self.toggl.Tasks.delete(ids=ids)
+        self.assertTrue(response.ok)
+        self.assertEqual(len(responses.calls), 1)
+
+
+class TestTimeEntries(TestTogglBase):
+    focus_class = api.TimeEntries
+
+    @responses.activate
+    def test_create(self):
+        """ Should create a new TimeEntry. """
+        self.responses_add('POST', filename='time_entry_create')
+        create_data = {"time_entry": {
+            "description": "Meeting with possible clients",
+            "tags": ["billed"],
+            "duration": 1200,
+            "start": "2013-03-05T07:58:58.000Z",
+            "pid": 123,
+            "created_with": "togglwrapper"
+        }}
+        response = self.toggl.TimeEntries.create(create_data)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_start(self):
+        """ Should start a TimeEntry. """
+        self.responses_add('PUT', 'time_entry_start', child_uri='/start')
+        start_data = {"time_entry": {
+            "description": "Meeting with possible clients",
+            "tags": ["billed"],
+            "pid": 123,
+            "created_with": "togglwrapper"
+        }}
+        response = self.toggl.TimeEntries.start(start_data)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_stop(self):
+        """ Should stop a TimeEntry. """
+        inst_id = 436694100
+        self.responses_add(
+            'PUT',
+            filename='time_entry_stop',
+            id=inst_id,
+            child_uri='/stop'
+        )
+        response = self.toggl.TimeEntries.stop(inst_id)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_get_by_id(self):
+        """ Should get a TimeEntry. """
+        inst_id = 436694100
+        self.responses_add('GET', filename='time_entry_get', id=inst_id)
+        response = self.toggl.TimeEntries.get(id=inst_id)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_get_current(self):
+        """ Should get the current running TimeEntry. """
+        self.responses_add('GET', 'time_entry_current', child_uri='/current')
+        response = self.toggl.TimeEntries.get_current()
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_get_in_time_range(self):
+        """ Should get the TimeEntries started in a specific time range. """
+        self.responses_add('GET', filename='time_entries_get_in_range')
+        response = self.toggl.TimeEntries.get(
+            start_date='2013-03-10T15:42:46+02:00',
+            end_date='2013-03-12T15:42:46+02:00'
+        )
+        self.assertEqual(type(response), list)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_update(self):
+        """ Should update a TimeEntry. """
+        inst_id = 436694100
+        self.responses_add('PUT', filename='time_entry_update', id=inst_id)
+        update_data = {"time_entry": {
+            "description": "Meeting with possible clients",
+            "tags": [""],
+            "duration": 1240,
+            "start": "2013-03-05T07:58:58.000Z",
+            "stop": "2013-03-05T08:58:58.000Z",
+            "duronly": True,
+            "pid": 123,
+            "billable": True
+        }}
+        response = self.toggl.TimeEntries.update(id=inst_id, data=update_data)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_delete(self):
+        """ Should delete a TimeEntry. """
+        inst_id = 1239455
+        self.responses_add('DELETE', id=inst_id)
+        response = self.toggl.TimeEntries.delete(inst_id)
+        self.assertTrue(response.ok)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_mass_update(self):
+        """ Should update multiple TimeEntries. """
+        ids = (436694100, 436694101)
+        self.responses_add('PUT', 'projectusers_update_multiple', ids=ids)
+        update_data = {"time_entry": {
+            "tags": ["billed", "productive"],
+            "tag_action": "add"
+        }}
+        response = self.toggl.TimeEntries.update(ids=ids, data=update_data)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+
 class TestUser(TestTogglBase):
     focus_class = api.User
 
@@ -329,7 +548,24 @@ class TestUser(TestTogglBase):
         """ Should successfully get the User associated with the token. """
         self.responses_add('GET', filename='user_get')
         response = self.toggl.User.get()
-        self.assertTrue(response)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_get_with_related_data(self):
+        """ Should get the User associated with the token and related data. """
+        self.responses_add('GET', filename='user_get_with_related_data')
+        response = self.toggl.User.get(related_data=True)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_update(self):
+        """ Should update the User associated with the api token. """
+        self.responses_add('PUT', filename='user_update')
+        update_data = {"user": {"fullname": "John Smith"}}
+        response = self.toggl.User.update(update_data)
+        self.assertEqual(type(response), dict)
         self.assertEqual(len(responses.calls), 1)
 
 
