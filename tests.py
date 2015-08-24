@@ -569,6 +569,139 @@ class TestUser(TestTogglBase):
         self.assertEqual(len(responses.calls), 1)
 
 
+class TestWorkspaces(TestTogglBase):
+    focus_class = api.Workspaces
+
+    @responses.activate
+    def test_get(self):
+        """ Should successfully get an iterable of Workspaces. """
+        self.responses_add('GET', filename='workspaces_get')
+        response = self.toggl.Workspaces.get()
+        self.assertEqual(type(response), list)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_get_by_id(self):
+        """ Should successfully get a specific Workspace. """
+        inst_id = 3134975
+        self.responses_add('GET', filename='workspace_get', id=inst_id)
+        response = self.toggl.Workspaces.get(id=inst_id)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_update(self):
+        """ Should update a specific Workspace. """
+        inst_id = 3134975
+        self.responses_add('PUT', filename='workspace_update', id=inst_id)
+        update_data = {"workspace": {
+            "default_currency": "EUR",
+            "default_hourly_rate": 50,
+            "name": "John's ws",
+            "only_admins_may_create_projects": False,
+            "only_admins_see_billable_rates": True,
+            "rounding": 1,
+            "rounding_minutes": 60
+        }}
+        response = self.toggl.Workspaces.update(id=inst_id, data=update_data)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_users_get(self):
+        """ Should get Users under the Workspace. """
+        inst_id = 777
+        self.responses_add('GET', filename='workspace_users', id=inst_id,
+                           child_uri='/users')
+        response = self.toggl.Workspaces.get_users(inst_id)
+        self.assertEqual(type(response), list)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_clients_get(self):
+        """ Should get Clients under the Workspace. """
+        inst_id = 777
+        self.responses_add('GET', filename='workspace_clients', id=inst_id,
+                           child_uri='/clients')
+        response = self.toggl.Workspaces.get_clients(inst_id)
+        self.assertEqual(type(response), list)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_projects_get(self):
+        """ Should get Projects under the Workspace. """
+        inst_id = 777
+        self.responses_add('GET', 'workspace_projects', id=inst_id,
+                           child_uri='/projects')
+        response = self.toggl.Workspaces.get_projects(inst_id)
+        self.assertEqual(type(response), list)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_tasks_get(self):
+        """ Should get Tasks under the Workspace. """
+        inst_id = 777
+        self.responses_add('GET', 'workspace_tasks', id=inst_id,
+                           child_uri='/tasks')
+        response = self.toggl.Workspaces.get_tasks(inst_id)
+        self.assertEqual(type(response), list)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_tags_get(self):
+        """ Should get Tags under the Workspace. """
+        inst_id = 777
+        self.responses_add('GET', 'workspace_tags', id=inst_id,
+                           child_uri='/tags')
+        response = self.toggl.Workspaces.get_tags(inst_id)
+        self.assertEqual(type(response), list)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_workspace_users_get(self):
+        """ Should get WorkspaceUsers under the Workspace. """
+        inst_id = 777
+        self.responses_add('GET', 'workspace_workspaceusers', id=inst_id,
+                           child_uri='/workspace_users')
+        response = self.toggl.Workspaces.get_workspace_users(inst_id)
+        self.assertEqual(type(response), list)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_invite(self):
+        """ Should invite users to the given Workspace. """
+        inst_id = 777
+        self.responses_add('POST', 'workspace_invite', id=inst_id,
+                           child_uri='/invite')
+        data = {"emails": ["john.doe@toggl.com", "Jane.Swift@toggl.com"]}
+        response = self.toggl.Workspaces.invite(inst_id, data)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+
+class TestWorkspaceUsers(TestTogglBase):
+    focus_class = api.WorkspaceUsers
+
+    @responses.activate
+    def test_update(self):
+        """ Should update a specific WorkspaceUser. """
+        inst_id = 19012628
+        self.responses_add('PUT', filename='workspaceuser_update', id=inst_id)
+        update_data = {"workspace_user": {"admin": False}}
+        response = self.toggl.WorkspaceUsers.update(inst_id, data=update_data)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_delete(self):
+        """ Should delete a specific WorkspaceUser. """
+        inst_id = 19012628
+        self.responses_add('DELETE', id=inst_id)
+        response = self.toggl.WorkspaceUsers.delete(inst_id)
+        self.assertTrue(response.ok)
+        self.assertEqual(len(responses.calls), 1)
+
+
 if __name__ == '__main__' and __package__ is None:
     __package__ = "toggl"
     unittest.main()
