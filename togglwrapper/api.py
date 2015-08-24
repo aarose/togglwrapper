@@ -14,10 +14,6 @@ API_URL = '{base}/{version}'.format(base=BASE_URL, version=API_VERSION)
 class TogglObject(object):
     uri = None
 
-    @property
-    def full_uri(self):
-        return '{api}{uri}'.format(api=self.client.api_url, uri=self.uri)
-
     def __init__(self, toggl):
         self.toggl = toggl
         if self.uri is None:
@@ -37,7 +33,7 @@ class TogglObject(object):
         return uri
 
 
-class Get(object):
+class GetMixin(object):
 
     def get(self, id=None, child_uri=None, params=None):
         """
@@ -58,20 +54,20 @@ class Get(object):
         return self.toggl.get(uri, params=params)
 
 
-class Create(object):
+class CreateMixin(object):
     def create(self, data):
         """ Create a new instance of the object type. """
         return self.toggl.post(self.uri, data)
 
 
-class Update(object):
+class UpdateMixin(object):
     def update(self, id=None, ids=None, child_uri=None, data=None):
         """ Update a specific instance by ID, or update multiple instances. """
         uri = self._compile_uri(id=id, ids=ids, child_uri=child_uri)
         return self.toggl.put(uri, data)
 
 
-class Delete(object):
+class DeleteMixin(object):
     def delete(self, id=None, ids=None):
         """ Delete a specific instance by ID, or delete multiple instances. """
         if not any((id, ids)):
@@ -79,7 +75,7 @@ class Delete(object):
         return self.toggl.delete(self._compile_uri(id=id, ids=ids))
 
 
-class Clients(TogglObject, Get, Create, Update, Delete):
+class Clients(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
     uri = '/clients'
 
     def get_projects(self, client_id, active=True):
@@ -101,7 +97,7 @@ class Clients(TogglObject, Get, Create, Update, Delete):
         return super(Clients, self).get(client_id, '/projects', params=params)
 
 
-class Dashboard(TogglObject, Get):
+class Dashboard(TogglObject, GetMixin):
     uri = 'dashboard'
 
     def get(self, workspace_id):
@@ -109,7 +105,7 @@ class Dashboard(TogglObject, Get):
         return super(Dashboard, self).get(id=workspace_id)
 
 
-class Projects(TogglObject, Get, Create, Update, Delete):
+class Projects(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
     uri = '/projects'
 
     def get(self, project_id):
@@ -125,7 +121,7 @@ class Projects(TogglObject, Get, Create, Update, Delete):
         return super(Projects, self).get(project_id, '/tasks')
 
 
-class ProjectUsers(TogglObject, Create, Update, Delete):
+class ProjectUsers(TogglObject, CreateMixin, UpdateMixin, DeleteMixin):
     uri = '/project_users'
 
     def get_for_project(self, project_id):
@@ -133,11 +129,11 @@ class ProjectUsers(TogglObject, Create, Update, Delete):
         return self.toggl.Projects.get_project_users(project_id)
 
 
-class Tags(TogglObject, Create, Update, Delete):
+class Tags(TogglObject, CreateMixin, UpdateMixin, DeleteMixin):
     uri = '/tags'
 
 
-class Tasks(TogglObject, Get, Create, Update, Delete):
+class Tasks(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
     uri = '/tasks'
 
     def get(self, tag_id):
@@ -148,7 +144,8 @@ class Tasks(TogglObject, Get, Create, Update, Delete):
         return self.toggl.Projects.get_tasks(project_id)
 
 
-class TimeEntries(TogglObject, Get, Create, Update, Delete):
+class TimeEntries(TogglObject, GetMixin, CreateMixin, UpdateMixin,
+                  DeleteMixin):
     uri = '/time_entries'
 
     def get(self, id=None, start_date=None, end_date=None):
@@ -170,7 +167,7 @@ class TimeEntries(TogglObject, Get, Create, Update, Delete):
         return super(TimeEntries, self).get(child_uri='/current')
 
 
-class User(TogglObject, Get, Update):
+class User(TogglObject, GetMixin, UpdateMixin):
     uri = '/me'
 
     def get(self, related_data=False, since=None):
@@ -185,7 +182,7 @@ class User(TogglObject, Get, Update):
         return super(User, self).update(data=data)
 
 
-class Workspaces(TogglObject, Get, Update):
+class Workspaces(TogglObject, GetMixin, UpdateMixin):
     uri = '/workspaces'
 
     def get_users(self, workspace_id):
@@ -218,7 +215,7 @@ class Workspaces(TogglObject, Get, Update):
         return self.toggl.post(uri, data)
 
 
-class WorkspaceUsers(TogglObject, Update, Delete):
+class WorkspaceUsers(TogglObject, UpdateMixin, DeleteMixin):
     uri = '/workspace_users'
 
 
