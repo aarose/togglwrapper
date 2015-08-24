@@ -175,7 +175,9 @@ class User(TogglObject, Get, Update):
 
     def get(self, related_data=False, since=None):
         """ Get the user associated with the current API token. """
-        params = {'related_data': related_data, 'since': since}
+        params = {'since': since}
+        if related_data:
+            params['with_related_data'] = related_data
         return super(User, self).get(params=params)
 
     def update(self, data):
