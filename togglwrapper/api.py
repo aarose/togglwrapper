@@ -211,9 +211,9 @@ class Workspaces(TogglObject, Get, Update):
         return super(Workspaces, self).get(workspace_id, '/workspace_users')
 
     def invite(self, workspace_id, data):
-        """ Add users to workspace. """
-        uri = '/workspaces/{workspace_id}/invite'.format(workspace_id)
-        self.toggl.post(uri, data)
+        """ Add users to the workspace. Sends an email invite to the users. """
+        uri = '/workspaces/{wid}/invite'.format(wid=workspace_id)
+        return self.toggl.post(uri, data)
 
 
 class WorkspaceUsers(TogglObject, Update, Delete):
