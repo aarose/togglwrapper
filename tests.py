@@ -3,6 +3,8 @@ import os
 import unittest
 
 import responses
+from requests.exceptions import HTTPError
+
 
 from togglwrapper import api
 from togglwrapper.exceptions import AuthError
@@ -62,6 +64,24 @@ class TestToggl(TestTogglBase):
         full_url = self.toggl.api_url + self.toggl.User.uri
         responses.add(responses.GET, full_url, status=403)
         self.assertRaises(AuthError, self.toggl.User.get)
+        self.assertEqual(len(responses.calls), 1)
+
+    @responses.activate
+    def test_failed_request(self):
+        """ Should raise an HTTPError with status code 404. """
+        full_url = self.toggl.api_url + self.toggl.TimeEntries.uri
+        responses.add(
+            responses.POST,
+            full_url,
+            body=self.get_json('failed_request'),
+            status=404,
+        )
+        wrong_data = {"time_entry": {
+            "description": "New time entry",
+            "created_with": "API example code"
+        }}
+        self.assertRaises(HTTPError, self.toggl.TimeEntries.create,
+                          data=wrong_data)
         self.assertEqual(len(responses.calls), 1)
 
 
