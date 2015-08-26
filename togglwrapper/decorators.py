@@ -17,6 +17,12 @@ def error_checking(func):
         if response.status_code == 403:
             raise AuthError('Incorrect API token.')
         # Raise an HTTPError if status code isn't 200
+        try:
+            reason = response.json()
+        except ValueError:
+            pass
+        else:
+            response.reason = reason
         response.raise_for_status()
         return response
     return inner
