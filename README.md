@@ -1,5 +1,11 @@
 # Toggl Wrapper
-Easily interface with Toggl's API. Only supports the main Toggl API, not the Reports API (coming soon).
+
+Python library to easily interface with Toggl's API. Only supports the main Toggl API, not the Reports API (coming soon).
+
+
+## Toggl
+
+Toggl (www.toggl.com) is free time tracking software.
 
 
 ## Quick setup
