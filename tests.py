@@ -82,7 +82,17 @@ class TestToggl(TestTogglBase):
         }}
         self.assertRaises(HTTPError, self.toggl.TimeEntries.create,
                           data=wrong_data)
-        self.assertEqual(len(responses.calls), 1)
+        # Ensure that the error message in the response is the exception reason
+        reason = json.loads(self.get_json('failed_request'))
+        try:
+            self.toggl.TimeEntries.create(data=wrong_data)
+        except HTTPError, e:
+            self.assertEqual(e.response.reason, reason)
+        else:
+            raise Exception('Reason was not correct.')
+
+        # Ensure that the mocked response was triggered twice
+        self.assertEqual(len(responses.calls), 2)
 
 
 class TestClients(TestTogglBase):
@@ -92,8 +102,8 @@ class TestClients(TestTogglBase):
     def test_create(self):
         """ Should create a new Client. """
         self.responses_add('POST', filename='client_create')
-        new_client_data = {"client": {"name": "Very Big Company", "wid": 777}}
-        response = self.toggl.Clients.create(new_client_data)
+        create_data = {"client": {"name": "Very Big Company", "wid": 777}}
+        response = self.toggl.Clients.create(create_data)
         self.assertEqual(type(response), dict)
         self.assertEqual(len(responses.calls), 1)
 
