@@ -86,7 +86,7 @@ class TestToggl(TestTogglBase):
         reason = json.loads(self.get_json('failed_request'))
         try:
             self.toggl.TimeEntries.create(data=wrong_data)
-        except HTTPError, e:
+        except HTTPError as e:
             self.assertEqual(e.response.reason, reason)
         else:
             raise Exception('Reason was not correct.')
