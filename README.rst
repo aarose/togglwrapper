@@ -92,8 +92,8 @@ Methods and Classes
 - toggl.reset_token()
 
 
------------------
-API Endpoints Ref
------------------
+---------------------------
+API Endpoints Documentation
+---------------------------
 
 For full details on what fields are required, and what endpoints are available, see the `Toggl API docs <https://github.com/toggl/toggl_api_docs>`_
