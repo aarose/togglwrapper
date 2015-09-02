@@ -1,0 +1,330 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>togglwrapper.api &mdash; togglwrapper 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="togglwrapper 1.0.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for togglwrapper.api</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">from</span> <span class="nn">requests.auth</span> <span class="kn">import</span> <span class="n">HTTPBasicAuth</span>
+
+<span class="kn">from</span> <span class="nn">.decorators</span> <span class="kn">import</span> <span class="n">error_checking</span><span class="p">,</span> <span class="n">return_json</span>
+<span class="kn">from</span> <span class="nn">.mixins</span> <span class="kn">import</span> <span class="n">GetMixin</span><span class="p">,</span> <span class="n">CreateMixin</span><span class="p">,</span> <span class="n">UpdateMixin</span><span class="p">,</span> <span class="n">DeleteMixin</span>
+
+
+<span class="n">BASE_URL</span> <span class="o">=</span> <span class="s">&#39;https://www.toggl.com/api&#39;</span>
+<span class="n">API_VERSION</span> <span class="o">=</span> <span class="s">&#39;v8&#39;</span>
+<span class="n">API_URL</span> <span class="o">=</span> <span class="s">&#39;{base}/{version}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">base</span><span class="o">=</span><span class="n">BASE_URL</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="n">API_VERSION</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">TogglObject</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Base class for Toggl representations to inherit from. &quot;&quot;&quot;</span>
+    <span class="n">uri</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">toggl</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toggl</span> <span class="o">=</span> <span class="n">toggl</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">uri</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c"># Helper error for subclasses that forget to specify their own URI</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;Must define a URI.&#39;</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_compile_uri</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">child_uri</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">id</span> <span class="ow">and</span> <span class="n">ids</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;Cannot use both an ID and an iterable of IDs.&#39;</span><span class="p">)</span>
+        <span class="n">uri</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">uri</span>
+        <span class="k">if</span> <span class="nb">id</span><span class="p">:</span>
+            <span class="n">uri</span> <span class="o">+=</span> <span class="s">&#39;/{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ids</span><span class="p">:</span>
+            <span class="n">uri</span> <span class="o">+=</span> <span class="s">&#39;/{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">int_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">int_id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="n">child_uri</span><span class="p">:</span>
+            <span class="n">uri</span> <span class="o">+=</span> <span class="n">child_uri</span>
+        <span class="k">return</span> <span class="n">uri</span>
+
+
+<div class="viewcode-block" id="Clients"><a class="viewcode-back" href="../../api.html#togglwrapper.Clients">[docs]</a><span class="k">class</span> <span class="nc">Clients</span><span class="p">(</span><span class="n">TogglObject</span><span class="p">,</span> <span class="n">GetMixin</span><span class="p">,</span> <span class="n">CreateMixin</span><span class="p">,</span> <span class="n">UpdateMixin</span><span class="p">,</span> <span class="n">DeleteMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The :class:`Clients &lt;Clients&gt;` object.</span>
+
+<span class="sd">    Groups all actions relating to Clients together.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">uri</span> <span class="o">=</span> <span class="s">&#39;/clients&#39;</span>
+
+<div class="viewcode-block" id="Clients.get_projects"><a class="viewcode-back" href="../../api.html#togglwrapper.Clients.get_projects">[docs]</a>    <span class="k">def</span> <span class="nf">get_projects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client_id</span><span class="p">,</span> <span class="n">active</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the projects associated with the Client with the given ID.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            client_id (int): The ID of the client.</span>
+<span class="sd">            active (bool or string, optional): Must be either True, False, or</span>
+<span class="sd">                the string &#39;both&#39;. Defaults to True.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cond1</span> <span class="o">=</span> <span class="p">(</span><span class="n">active</span> <span class="ow">is</span> <span class="bp">True</span><span class="p">)</span>
+        <span class="n">cond2</span> <span class="o">=</span> <span class="p">(</span><span class="n">active</span> <span class="ow">is</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="n">cond3</span> <span class="o">=</span> <span class="p">(</span><span class="n">active</span> <span class="ow">is</span> <span class="s">&#39;both&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">((</span><span class="n">cond1</span><span class="p">,</span> <span class="n">cond2</span><span class="p">,</span> <span class="n">cond3</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;The &#39;active&#39; param must be either True, False,&quot;</span><span class="p">,</span>
+                            <span class="s">&quot;or &#39;both&#39;.&quot;</span><span class="p">)</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;active&#39;</span><span class="p">:</span> <span class="n">active</span><span class="p">}</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Clients</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">client_id</span><span class="p">,</span> <span class="s">&#39;/projects&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="Dashboard"><a class="viewcode-back" href="../../api.html#togglwrapper.Dashboard">[docs]</a><span class="k">class</span> <span class="nc">Dashboard</span><span class="p">(</span><span class="n">TogglObject</span><span class="p">,</span> <span class="n">GetMixin</span><span class="p">):</span>
+    <span class="n">uri</span> <span class="o">=</span> <span class="s">&#39;dashboard&#39;</span>
+
+<div class="viewcode-block" id="Dashboard.get"><a class="viewcode-back" href="../../api.html#togglwrapper.Dashboard.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workspace_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the Dashboard for the Workspace with the given ID. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Dashboard</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">workspace_id</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="Projects"><a class="viewcode-back" href="../../api.html#togglwrapper.Projects">[docs]</a><span class="k">class</span> <span class="nc">Projects</span><span class="p">(</span><span class="n">TogglObject</span><span class="p">,</span> <span class="n">GetMixin</span><span class="p">,</span> <span class="n">CreateMixin</span><span class="p">,</span> <span class="n">UpdateMixin</span><span class="p">,</span> <span class="n">DeleteMixin</span><span class="p">):</span>
+    <span class="n">uri</span> <span class="o">=</span> <span class="s">&#39;/projects&#39;</span>
+
+<div class="viewcode-block" id="Projects.get"><a class="viewcode-back" href="../../api.html#togglwrapper.Projects.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the Project with the given ID. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Projects</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">project_id</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Projects.get_project_users"><a class="viewcode-back" href="../../api.html#togglwrapper.Projects.get_project_users">[docs]</a>    <span class="k">def</span> <span class="nf">get_project_users</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the ProjectUsers for the Project with the given ID. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Projects</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">project_id</span><span class="p">,</span> <span class="s">&#39;/project_users&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Projects.get_tasks"><a class="viewcode-back" href="../../api.html#togglwrapper.Projects.get_tasks">[docs]</a>    <span class="k">def</span> <span class="nf">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the Tasks for the Project with the given ID. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Projects</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">project_id</span><span class="p">,</span> <span class="s">&#39;/tasks&#39;</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="ProjectUsers"><a class="viewcode-back" href="../../api.html#togglwrapper.ProjectUsers">[docs]</a><span class="k">class</span> <span class="nc">ProjectUsers</span><span class="p">(</span><span class="n">TogglObject</span><span class="p">,</span> <span class="n">CreateMixin</span><span class="p">,</span> <span class="n">UpdateMixin</span><span class="p">,</span> <span class="n">DeleteMixin</span><span class="p">):</span>
+    <span class="n">uri</span> <span class="o">=</span> <span class="s">&#39;/project_users&#39;</span>
+
+<div class="viewcode-block" id="ProjectUsers.get_for_project"><a class="viewcode-back" href="../../api.html#togglwrapper.ProjectUsers.get_for_project">[docs]</a>    <span class="k">def</span> <span class="nf">get_for_project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the ProjectUsers for the Project with the given ID. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">toggl</span><span class="o">.</span><span class="n">Projects</span><span class="o">.</span><span class="n">get_project_users</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="Tags"><a class="viewcode-back" href="../../api.html#togglwrapper.Tags">[docs]</a><span class="k">class</span> <span class="nc">Tags</span><span class="p">(</span><span class="n">TogglObject</span><span class="p">,</span> <span class="n">CreateMixin</span><span class="p">,</span> <span class="n">UpdateMixin</span><span class="p">,</span> <span class="n">DeleteMixin</span><span class="p">):</span>
+    <span class="n">uri</span> <span class="o">=</span> <span class="s">&#39;/tags&#39;</span>
+
+</div>
+<div class="viewcode-block" id="Tasks"><a class="viewcode-back" href="../../api.html#togglwrapper.Tasks">[docs]</a><span class="k">class</span> <span class="nc">Tasks</span><span class="p">(</span><span class="n">TogglObject</span><span class="p">,</span> <span class="n">GetMixin</span><span class="p">,</span> <span class="n">CreateMixin</span><span class="p">,</span> <span class="n">UpdateMixin</span><span class="p">,</span> <span class="n">DeleteMixin</span><span class="p">):</span>
+    <span class="n">uri</span> <span class="o">=</span> <span class="s">&#39;/tasks&#39;</span>
+
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag_id</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Tasks</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">tag_id</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Tasks.get_for_project"><a class="viewcode-back" href="../../api.html#togglwrapper.Tasks.get_for_project">[docs]</a>    <span class="k">def</span> <span class="nf">get_for_project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the Tasks for the Project with the given ID. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">toggl</span><span class="o">.</span><span class="n">Projects</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="TimeEntries"><a class="viewcode-back" href="../../api.html#togglwrapper.TimeEntries">[docs]</a><span class="k">class</span> <span class="nc">TimeEntries</span><span class="p">(</span><span class="n">TogglObject</span><span class="p">,</span> <span class="n">GetMixin</span><span class="p">,</span> <span class="n">CreateMixin</span><span class="p">,</span> <span class="n">UpdateMixin</span><span class="p">,</span>
+                  <span class="n">DeleteMixin</span><span class="p">):</span>
+    <span class="n">uri</span> <span class="o">=</span> <span class="s">&#39;/time_entries&#39;</span>
+
+<div class="viewcode-block" id="TimeEntries.get"><a class="viewcode-back" href="../../api.html#togglwrapper.TimeEntries.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">start_date</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">end_date</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the time entry. &quot;&quot;&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;start_date&#39;</span><span class="p">:</span> <span class="n">start_date</span><span class="p">,</span> <span class="s">&#39;end_date&#39;</span><span class="p">:</span> <span class="n">end_date</span><span class="p">}</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">TimeEntries</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="TimeEntries.start"><a class="viewcode-back" href="../../api.html#togglwrapper.TimeEntries.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Start a new time entry. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">TimeEntries</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">child_uri</span><span class="o">=</span><span class="s">&#39;/start&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="TimeEntries.stop"><a class="viewcode-back" href="../../api.html#togglwrapper.TimeEntries.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_entry_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Stop the time entry with the given ID. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">TimeEntries</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">time_entry_id</span><span class="p">,</span>
+                                               <span class="n">child_uri</span><span class="o">=</span><span class="s">&#39;/stop&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="TimeEntries.get_current"><a class="viewcode-back" href="../../api.html#togglwrapper.TimeEntries.get_current">[docs]</a>    <span class="k">def</span> <span class="nf">get_current</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the current running time entry. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">TimeEntries</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">child_uri</span><span class="o">=</span><span class="s">&#39;/current&#39;</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="User"><a class="viewcode-back" href="../../api.html#togglwrapper.User">[docs]</a><span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="n">TogglObject</span><span class="p">,</span> <span class="n">GetMixin</span><span class="p">,</span> <span class="n">UpdateMixin</span><span class="p">):</span>
+    <span class="n">uri</span> <span class="o">=</span> <span class="s">&#39;/me&#39;</span>
+
+<div class="viewcode-block" id="User.get"><a class="viewcode-back" href="../../api.html#togglwrapper.User.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">related_data</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">since</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the user associated with the current API token. &quot;&quot;&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;since&#39;</span><span class="p">:</span> <span class="n">since</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">related_data</span><span class="p">:</span>
+            <span class="n">params</span><span class="p">[</span><span class="s">&#39;with_related_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">related_data</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">User</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="User.update"><a class="viewcode-back" href="../../api.html#togglwrapper.User.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Update the user associated with the api token. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">User</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="Workspaces"><a class="viewcode-back" href="../../api.html#togglwrapper.Workspaces">[docs]</a><span class="k">class</span> <span class="nc">Workspaces</span><span class="p">(</span><span class="n">TogglObject</span><span class="p">,</span> <span class="n">GetMixin</span><span class="p">,</span> <span class="n">UpdateMixin</span><span class="p">):</span>
+    <span class="n">uri</span> <span class="o">=</span> <span class="s">&#39;/workspaces&#39;</span>
+
+<div class="viewcode-block" id="Workspaces.get_users"><a class="viewcode-back" href="../../api.html#togglwrapper.Workspaces.get_users">[docs]</a>    <span class="k">def</span> <span class="nf">get_users</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workspace_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the Users for the Workspace with the given ID. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Workspaces</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">workspace_id</span><span class="p">,</span> <span class="s">&#39;/users&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Workspaces.get_clients"><a class="viewcode-back" href="../../api.html#togglwrapper.Workspaces.get_clients">[docs]</a>    <span class="k">def</span> <span class="nf">get_clients</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workspace_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the Clients for the Workspace with the given ID. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Workspaces</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">workspace_id</span><span class="p">,</span> <span class="s">&#39;/clients&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Workspaces.get_projects"><a class="viewcode-back" href="../../api.html#togglwrapper.Workspaces.get_projects">[docs]</a>    <span class="k">def</span> <span class="nf">get_projects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workspace_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the Projects for the Workspace with the given ID. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Workspaces</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">workspace_id</span><span class="p">,</span> <span class="s">&#39;/projects&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Workspaces.get_tasks"><a class="viewcode-back" href="../../api.html#togglwrapper.Workspaces.get_tasks">[docs]</a>    <span class="k">def</span> <span class="nf">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workspace_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the Tasks for the Workspace with the given ID. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Workspaces</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">workspace_id</span><span class="p">,</span> <span class="s">&#39;/tasks&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Workspaces.get_tags"><a class="viewcode-back" href="../../api.html#togglwrapper.Workspaces.get_tags">[docs]</a>    <span class="k">def</span> <span class="nf">get_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workspace_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the Tags for the Workspace with the given ID. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Workspaces</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">workspace_id</span><span class="p">,</span> <span class="s">&#39;/tags&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Workspaces.get_workspace_users"><a class="viewcode-back" href="../../api.html#togglwrapper.Workspaces.get_workspace_users">[docs]</a>    <span class="k">def</span> <span class="nf">get_workspace_users</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workspace_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the WorkspaceUsers for the Workspace with the given ID. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Workspaces</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">workspace_id</span><span class="p">,</span> <span class="s">&#39;/workspace_users&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Workspaces.invite"><a class="viewcode-back" href="../../api.html#togglwrapper.Workspaces.invite">[docs]</a>    <span class="k">def</span> <span class="nf">invite</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workspace_id</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add users to the workspace. Sends an email invite to the users. &quot;&quot;&quot;</span>
+        <span class="n">uri</span> <span class="o">=</span> <span class="s">&#39;/workspaces/{wid}/invite&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">wid</span><span class="o">=</span><span class="n">workspace_id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">toggl</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="WorkspaceUsers"><a class="viewcode-back" href="../../api.html#togglwrapper.WorkspaceUsers">[docs]</a><span class="k">class</span> <span class="nc">WorkspaceUsers</span><span class="p">(</span><span class="n">TogglObject</span><span class="p">,</span> <span class="n">UpdateMixin</span><span class="p">,</span> <span class="n">DeleteMixin</span><span class="p">):</span>
+    <span class="n">uri</span> <span class="o">=</span> <span class="s">&#39;/workspace_users&#39;</span>
+
+</div>
+<div class="viewcode-block" id="Toggl"><a class="viewcode-back" href="../../api.html#togglwrapper.Toggl">[docs]</a><span class="k">class</span> <span class="nc">Toggl</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">api_token</span><span class="p">,</span> <span class="n">base_url</span><span class="o">=</span><span class="n">BASE_URL</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="n">API_VERSION</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api_url</span> <span class="o">=</span> <span class="s">&#39;{base}/{version}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">base</span><span class="o">=</span><span class="n">base_url</span><span class="p">,</span>
+                                                 <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">auth</span> <span class="o">=</span> <span class="n">HTTPBasicAuth</span><span class="p">(</span><span class="n">api_token</span><span class="p">,</span> <span class="s">&#39;api_token&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Clients</span> <span class="o">=</span> <span class="n">Clients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Dashboard</span> <span class="o">=</span> <span class="n">Dashboard</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Projects</span> <span class="o">=</span> <span class="n">Projects</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ProjectUsers</span> <span class="o">=</span> <span class="n">ProjectUsers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Tags</span> <span class="o">=</span> <span class="n">Tags</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Tasks</span> <span class="o">=</span> <span class="n">Tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">TimeEntries</span> <span class="o">=</span> <span class="n">TimeEntries</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">User</span> <span class="o">=</span> <span class="n">User</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Workspaces</span> <span class="o">=</span> <span class="n">Workspaces</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">WorkspaceUsers</span> <span class="o">=</span> <span class="n">WorkspaceUsers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Toggl.signups"><a class="viewcode-back" href="../../api.html#togglwrapper.Toggl.signups">[docs]</a>    <span class="k">def</span> <span class="nf">signups</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a new user.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          data (dict): Contains required and optional fields and values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s">&#39;/signups&#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Toggl.reset_token"><a class="viewcode-back" href="../../api.html#togglwrapper.Toggl.reset_token">[docs]</a>    <span class="k">def</span> <span class="nf">reset_token</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Delete the current API Token and use a new token. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s">&#39;/reset_token&#39;</span><span class="p">)</span>
+</div>
+    <span class="nd">@return_json</span>
+    <span class="nd">@error_checking</span>
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; GET to the given uri. &quot;&quot;&quot;</span>
+        <span class="n">full_uri</span> <span class="o">=</span> <span class="s">&#39;{base}{uri}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">base</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">api_url</span><span class="p">,</span> <span class="n">uri</span><span class="o">=</span><span class="n">uri</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">full_uri</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">auth</span><span class="p">)</span>
+
+    <span class="nd">@return_json</span>
+    <span class="nd">@error_checking</span>
+    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; POST to the given uri with a data dict. &quot;&quot;&quot;</span>
+        <span class="n">full_uri</span> <span class="o">=</span> <span class="s">&#39;{base}{uri}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">base</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">api_url</span><span class="p">,</span> <span class="n">uri</span><span class="o">=</span><span class="n">uri</span><span class="p">)</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">full_uri</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">auth</span><span class="p">)</span>
+
+    <span class="nd">@return_json</span>
+    <span class="nd">@error_checking</span>
+    <span class="k">def</span> <span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; PUT to the given uri with a data dict. &quot;&quot;&quot;</span>
+        <span class="n">full_uri</span> <span class="o">=</span> <span class="s">&#39;{base}{uri}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">base</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">api_url</span><span class="p">,</span> <span class="n">uri</span><span class="o">=</span><span class="n">uri</span><span class="p">)</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">requests</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">full_uri</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">auth</span><span class="p">)</span>
+
+    <span class="nd">@error_checking</span>
+    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uri</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; DELETE to the given uri. &quot;&quot;&quot;</span>
+        <span class="n">full_uri</span> <span class="o">=</span> <span class="s">&#39;{base}{uri}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">base</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">api_url</span><span class="p">,</span> <span class="n">uri</span><span class="o">=</span><span class="n">uri</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">requests</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">full_uri</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">auth</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, aarose.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
