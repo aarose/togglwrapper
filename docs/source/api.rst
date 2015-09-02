@@ -9,15 +9,22 @@ Toggl
     :inherited-members:
 
 
-Child Classes
+Toggl Classes
 -------------
+
+.. module:: togglwrapper.api
 
 These can all be accessed from an instantiated Toggl client. For example:
 
-.. code-block::python
+.. code-block:: python
 
     >>> toggl = Toggl('api_token')
     >>> toggl.Clients.get()
+    ...
+    >>> toggl.Dashboard.get(3542)
+    ...
+    >>> toggl.Workspaces.get()
+    ...
 
 
 .. autoclass:: togglwrapper.api.Clients
@@ -53,5 +60,7 @@ These can all be accessed from an instantiated Toggl client. For example:
 
 Exceptions
 ----------
+
+.. module:: togglwrapper.exceptions
 
 .. autoexception:: togglwrapper.exceptions.AuthError
