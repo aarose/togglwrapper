@@ -21,7 +21,7 @@ with open(path.join(here, 'test_requirements.txt')) as f:
 
 setup(
     name='togglwrapper',
-    version='1.0.0',
+    version='1.0.1',
     short_description="Library to easily interface with Toggl's API.",
     long_description=long_description,
     url='https://github.com/aarose/togglwrapper',
