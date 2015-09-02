@@ -25,7 +25,7 @@ setup(
     short_description="Library to easily interface with Toggl's API.",
     long_description=long_description,
     url='https://github.com/aarose/togglwrapper',
-    author='aarose (A. Paredes)',
+    author='aarose (Anarosa Paredes)',
     author_email='hello@aarose.red',
     license='MIT',
 
