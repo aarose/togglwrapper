@@ -17,7 +17,7 @@ class GetMixin(object):
     """ Mixin to add get methods to a class. """
     def get(self, id=None, child_uri=None, params=None):
         """
-        Get the array of objects, or a specific instance by ID.
+        Gets the array of objects, or a specific instance by ID.
 
         Args:
             id (int, optional): The ID of a specific instance of the Object.
@@ -40,7 +40,7 @@ class CreateMixin(object):
     """ Mixin to add create methods to a class. """
     def create(self, data):
         """
-        Create a new instance of the object type.
+        Creates a new instance of the object type.
 
         Args:
             data (dict): The dict of information needed to create a new object.
@@ -52,7 +52,7 @@ class UpdateMixin(object):
     """ Mixin to add update methods to a class. """
     def update(self, id=None, ids=None, child_uri=None, data=None):
         """
-        Update a specific instance by ID, or update multiple instances.
+        Updates a specific instance by ID, or update multiple instances.
 
         Args:
             id (int, optional): The ID of the instance to update. Defaults to
@@ -74,7 +74,7 @@ class DeleteMixin(object):
     """ Mixin to add delete methods to a class. """
     def delete(self, id=None, ids=None):
         """
-        Delete a specific instance by ID, or delete multiple instances.
+        Deletes a specific instance by ID, or delete multiple instances.
 
         Args:
             id (int, optional): The ID of the instance to delete. Defaulta to
