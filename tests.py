@@ -1,3 +1,16 @@
+# -*- coding: utf-8 -*-
+
+"""
+tests
+-----
+
+Ensures that certain actions in the togglwrapper library result in certain
+behaviours.
+
+Uses the responses library to mock out the requests library, and loads fixtures
+from ``fixtures/`` for the mock JSON response output.
+"""
+
 import json
 import os
 import unittest
@@ -57,6 +70,7 @@ class TestTogglBase(unittest.TestCase):
 
 
 class TestToggl(TestTogglBase):
+    """ Tests the main Toggl client Class. """
 
     @responses.activate
     def test_wrong_token(self):

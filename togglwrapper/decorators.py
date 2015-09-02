@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+
+"""
+togglwrapper.decorators
+-----------------------
+
+This module collects all decorators. These decorators manipulate the output of
+methods, and ensure errors in the responses are raised as exceptions.
+"""
+
 from .exceptions import AuthError
 
 
