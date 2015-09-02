@@ -25,14 +25,14 @@ setup(
     short_description="Library to easily interface with Toggl's API.",
     long_description=long_description,
     url='https://github.com/aarose/togglwrapper',
-    author='aarosered',
+    author='aarose',
     license='MIT',
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
-        'Topic :: Software Development :: API Tools',
+        'Topic :: Software Development :: Libraries :: Python Modules',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Programming Language :: Python :: 2.7',
