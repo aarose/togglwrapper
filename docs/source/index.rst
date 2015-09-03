@@ -25,31 +25,23 @@ Features
 - Uses `requests <http://www.python-requests.org/en/latest/>`_ for seamless HTTP requests
 
 
-Quickstart
-----------
+Guide
+-----
 
 .. toctree::
   :maxdepth: 2
 
+  install
   quickstart
 
 
-Installing:
------------
+API Documentation
+-----------------
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
-  install
-
-
-API Documentation:
-------------------
-
-.. toctree::
-   :maxdepth: 2
-
-   api
+  api
 
 
 Indices and tables
