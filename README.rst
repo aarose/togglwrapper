@@ -4,9 +4,9 @@ Toggl Wrapper
 
 Python library to easily interface with Toggl's API.
 
-Only supports the main Toggl API, not the Reports API (coming soon).
+Implements all of Toggl's main API. The Reports API is not yet supported (coming soon).
 
-Works in Python 2.7+ and Python 3+
+Works in Python 2.7+ and Python 3+, and uses `requests <http://www.python-requests.org/en/latest/>_`.
 
 
 -----
@@ -15,6 +15,13 @@ Toggl
 
 `Toggl <https://www.toggl.com>`_ is free time tracking software.
 
+--------
+Features
+--------
+- Handles authentication for you: you only need to provide your API token once
+- The most complete Python wrapper: implements and tests all of v8 API.
+- Convenient install from PyPI
+- If a new endpoint gets added before this library is updated, it's easy to make requests to custom URLs
 
 -------
 Install
@@ -54,6 +61,28 @@ Quickstart
     }]
     >>> toggl.Clients.create({"client":{"name":"Very Big Company", "wid": 1234}})
     {u'data': {u'id': 294021, u'name': u'Very Big Company', u'wid': 1234}}
+
+--------------
+Custom Request
+--------------
+
+Let's pretend that a new endpoint is released, for a new Toggl object: Addresses. This hypothetical endpoint is located at ``https://www.toggl.com/api/v8/addresses``. We can GET all addresses, GET a specific address by ID, or POST to create a new address.
+
+We can use the methods on the Toggl client, so we don't have to wait for a new version of togglwrapper that supports the new endpoint:
+
+.. code-block:: python
+
+    >>> from togglwrapper import Toggl
+    >>> toggl = Toggl('your_api_token')
+    >>> toggl.get('/addresses')
+    ...
+    >>> toggl.get('/addresses/{address_id}')
+    ...
+    >>> toggl.post('/addresses', data={"address": {"name": "Billing Address 1", "address": "123 Main St."}})
+    ...
+
+
+ ``toggl.put`` and ``toggl.delete`` are also available.
 
 
 -------------------
