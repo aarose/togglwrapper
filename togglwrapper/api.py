@@ -288,12 +288,12 @@ class Toggl(object):
     @error_checking
     def get(self, uri, params=None):
         """
-        GETs to the given uri.
+        GETs to the given URI.
 
         Args:
             uri (str): The URI/path to append to the full API URL.
             params (dict, optional): Extra parameters/querystrings to accompany
-                the GET request. Defaults to None.
+                the GET request.
         """
         full_uri = '{base}{uri}'.format(base=self.api_url, uri=uri)
         return requests.get(full_uri, params=params, auth=self.auth)
@@ -301,7 +301,13 @@ class Toggl(object):
     @return_json
     @error_checking
     def post(self, uri, data=None):
-        """ POSTs to the given uri with a data dict. """
+        """
+        POSTs to the given URI.
+
+        Args:
+            uri (str): The URI/path to append to the full API URL.
+            data (optional): dict, bytes, or file-like object to POST.
+        """
         full_uri = '{base}{uri}'.format(base=self.api_url, uri=uri)
         payload = json.dumps(data) if data is not None else None
         return requests.post(full_uri, data=payload, auth=self.auth)
@@ -309,13 +315,19 @@ class Toggl(object):
     @return_json
     @error_checking
     def put(self, uri, data):
-        """ PUTs to the given uri with a data dict. """
+        """
+        PUTs to the given URI with a data.
+
+        Args:
+            uri (str): The URI/path to append to the full API URL.
+            data: dict, bytes, or file-like object to PUT.
+        """
         full_uri = '{base}{uri}'.format(base=self.api_url, uri=uri)
         payload = json.dumps(data)
         return requests.put(full_uri, data=payload, auth=self.auth)
 
     @error_checking
     def delete(self, uri):
-        """ DELETEs to the given uri. """
+        """ DELETEs to the given URI. """
         full_uri = '{base}{uri}'.format(base=self.api_url, uri=uri)
         return requests.delete(full_uri, auth=self.auth)
