@@ -6,7 +6,7 @@ Python library to easily interface with Toggl's API.
 
 Implements all of Toggl's main API. The Reports API is not yet supported (coming soon).
 
-Works in Python 2.7+ and Python 3+, and uses `requests <http://www.python-requests.org/en/latest/>_`.
+Works in Python 2.7+ and Python 3+, and uses `requests <http://www.python-requests.org/en/latest/>`_.
 
 
 -----
