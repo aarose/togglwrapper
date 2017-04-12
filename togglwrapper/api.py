@@ -206,9 +206,30 @@ class Workspaces(TogglObject, GetMixin, UpdateMixin):
         """ Gets the Clients for the Workspace with the given ID. """
         return super(Workspaces, self).get(workspace_id, '/clients')
 
-    def get_projects(self, workspace_id):
-        """ Gets the Projects for the Workspace with the given ID. """
-        return super(Workspaces, self).get(workspace_id, '/projects')
+    def get_projects(self, workspace_id, active=None):
+        """
+        Gets the Projects for the Workspace with the given ID.
+
+        Args:
+            workspace_id (int): id of the project to retrieve projects from.API_URL
+            active (bool or string): If True, only active projects will be returned.
+                If False only archived projects will be returned. If None, all projects
+                are returned.
+        """
+        params = {}
+        if active is True:
+            active = "true"
+        elif active is False:
+            active = "false"
+
+        if isinstance(active, str):
+            if active.lower() not in ["true", "false", "both"]:
+                raise ValueError("Unexpected project state: %s" % active)
+            params["active"] = active.lower()
+        else:
+            raise TypeError("Unexpected type: %s" % type(active))
+
+        return super(Workspaces, self).get(workspace_id, '/projects', params=params)
 
     def get_tasks(self, workspace_id):
         """ Gets the Tasks for the Workspace with the given ID. """
