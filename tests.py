@@ -692,6 +692,56 @@ class TestWorkspaces(TestTogglBase):
         self.assertEqual(len(responses.calls), 1)
 
     @responses.activate
+    def test_tasks_get_filter_active_true(self):
+        """ Should get Tasks under the Workspace. """
+        inst_id = 777
+        self.responses_add('GET', 'workspace_tasks', id=inst_id,
+                           child_uri='/tasks')
+        self.toggl.Workspaces.get_tasks(inst_id, active=True)
+        self.toggl.Workspaces.get_tasks(inst_id, active='True')
+        self.toggl.Workspaces.get_tasks(inst_id, active='true')
+        self.assertEqual(len(responses.calls), 3)
+        self.assertIn('active=true', responses.calls[0].request.url)
+        self.assertIn('active=true', responses.calls[1].request.url)
+        self.assertIn('active=true', responses.calls[2].request.url)
+
+    @responses.activate
+    def test_tasks_get_filter_active_false(self):
+        """ Should get Tasks under the Workspace. """
+        inst_id = 777
+        self.responses_add('GET', 'workspace_tasks', id=inst_id,
+                           child_uri='/tasks')
+        self.toggl.Workspaces.get_tasks(inst_id, active=False)
+        self.toggl.Workspaces.get_tasks(inst_id, active='False')
+        self.toggl.Workspaces.get_tasks(inst_id, active='false')
+        self.assertEqual(len(responses.calls), 3)
+        self.assertIn('active=false', responses.calls[0].request.url)
+        self.assertIn('active=false', responses.calls[1].request.url)
+        self.assertIn('active=false', responses.calls[2].request.url)
+
+    @responses.activate
+    def test_tasks_get_filter_active_both(self):
+        """ Should get Tasks under the Workspace. """
+        inst_id = 777
+        self.responses_add('GET', 'workspace_tasks', id=inst_id,
+                           child_uri='/tasks')
+        self.toggl.Workspaces.get_tasks(inst_id, active='BOTH')
+        self.toggl.Workspaces.get_tasks(inst_id, active='both')
+        self.assertEqual(len(responses.calls), 2)
+        self.assertIn('active=both', responses.calls[0].request.url)
+        self.assertIn('active=both', responses.calls[1].request.url)
+
+    @responses.activate
+    def test_tasks_get_filter_active_invalid(self):
+        """ Should get Tasks under the Workspace. """
+        inst_id = 777
+        self.responses_add('GET', 'workspace_tasks', id=inst_id,
+                           child_uri='/tasks')
+        with self.assertRaises(ValueError) as context:
+            self.toggl.Workspaces.get_tasks(inst_id, active='botthhhhhh')
+        self.assertEqual(len(responses.calls), 0)
+
+    @responses.activate
     def test_tags_get(self):
         """ Should get Tags under the Workspace. """
         inst_id = 777

@@ -62,7 +62,7 @@ class GetMixin(object):
             value (str|bool): Value of the param.
         """
         allowed = ['true', 'false']
-        return self._valid_lower_values(value, name, allowed) if value else {}
+        return self._valid_lower_values(value, name, allowed) if value is not None else {}
 
     def param_bool_both(self, name, value):
         """ Returns the bool or both values used as params through the toggl API.
@@ -72,7 +72,7 @@ class GetMixin(object):
             value (str|bool): Value of the param.
         """
         allowed = ['true', 'false', 'both']
-        return self._valid_lower_values(value, name, allowed) if value else {}
+        return self._valid_lower_values(value, name, allowed) if value is not None else {}
 
 
 class CreateMixin(object):
