@@ -206,13 +206,19 @@ class Workspaces(TogglObject, GetMixin, UpdateMixin):
         """ Gets the Clients for the Workspace with the given ID. """
         return super(Workspaces, self).get(workspace_id, '/clients')
 
-    def get_projects(self, workspace_id):
+    def get_projects(self, workspace_id, active=None, actual_hours=None, only_templates=None):
         """ Gets the Projects for the Workspace with the given ID. """
-        return super(Workspaces, self).get(workspace_id, '/projects')
+        params = {}
+        params.update(self.param_bool_both('active', active))
+        params.update(self.param_bool('actual_hours', actual_hours))
+        params.update(self.param_bool('only_templates', only_templates))
+        return super(Workspaces, self).get(workspace_id, '/projects', params=params)
 
-    def get_tasks(self, workspace_id):
+    def get_tasks(self, workspace_id, active=None):
         """ Gets the Tasks for the Workspace with the given ID. """
-        return super(Workspaces, self).get(workspace_id, '/tasks')
+        params = {}
+        params.update(self.param_bool_both('active', active))
+        return super(Workspaces, self).get(workspace_id, '/tasks', params=params)
 
     def get_tags(self, workspace_id):
         """ Gets the Tags for the Workspace with the given ID. """

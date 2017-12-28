@@ -35,6 +35,45 @@ class GetMixin(object):
         uri = self._compile_uri(id, child_uri=child_uri)
         return self.toggl.get(uri, params=params)
 
+    def _valid_lower_values(self, value, name, allowed):
+        """
+        Validates and package the params in dict used as requests get query parameter.
+
+        Args:
+            name (str): Name of the param
+            value (str|bool): Value of the param.
+            allowed ([str]): Case insensitive allowed values
+
+        """
+        try:
+            value_ = str(value).lower()
+            if value_ in allowed:
+                return {name: value_}
+            raise ValueError('Param %s do not accept %s only %s.' %
+                             (name, value, allowed))
+        except AttributeError:  # Invalid param value
+            raise ValueError('Invalid param %s.' % name)
+
+    def param_bool(self, name, value):
+        """ Returns the bool values used as params through the toggl API.
+
+        Args:
+            name (str): Name of the param
+            value (str|bool): Value of the param.
+        """
+        allowed = ['true', 'false']
+        return self._valid_lower_values(value, name, allowed) if value else {}
+
+    def param_bool_both(self, name, value):
+        """ Returns the bool or both values used as params through the toggl API.
+
+        Args:
+            name (str): Name of the param
+            value (str|bool): Value of the param.
+        """
+        allowed = ['true', 'false', 'both']
+        return self._valid_lower_values(value, name, allowed) if value else {}
+
 
 class CreateMixin(object):
     """ Mixin to add create methods to a class. """
