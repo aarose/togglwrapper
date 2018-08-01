@@ -153,7 +153,8 @@ class TimeEntries(TogglObject, GetMixin, CreateMixin, UpdateMixin,
 
     def start(self, data):
         """ Starts a new time entry. """
-        return super(TimeEntries, self).update(child_uri='/start', data=data)
+        uri = self._compile_uri(child_uri='/start')
+        return self.toggl.post(uri, data=data)
 
     def stop(self, time_entry_id):
         """ Stops the time entry with the given ID. """
