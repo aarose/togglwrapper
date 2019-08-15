@@ -38,14 +38,17 @@ class GetMixin(object):
 
 class CreateMixin(object):
     """ Mixin to add create methods to a class. """
-    def create(self, data):
+    def create(self, data, child_uri=None):
         """
         Creates a new instance of the object type.
 
         Args:
             data (dict): The dict of information needed to create a new object.
+            child_uri (str, optional): The URI of the child Object or subpath.
+                Defaults to None.
         """
-        return self.toggl.post(self.uri, data)
+        uri = self._compile_uri(child_uri=child_uri)
+        return self.toggl.post(uri, data)
 
 
 class UpdateMixin(object):
