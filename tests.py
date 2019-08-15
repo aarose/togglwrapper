@@ -489,7 +489,7 @@ class TestTimeEntries(TestTogglBase):
     @responses.activate
     def test_start(self):
         """ Should start a TimeEntry. """
-        self.responses_add('PUT', 'time_entry_start', child_uri='/start')
+        self.responses_add('POST', 'time_entry_start', child_uri='/start')
         start_data = {"time_entry": {
             "description": "Meeting with possible clients",
             "tags": ["billed"],
