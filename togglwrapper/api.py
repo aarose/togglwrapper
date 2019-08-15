@@ -67,8 +67,7 @@ class Clients(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
 
         Args:
             client_id (int): The ID of the client.
-            active (bool or string, optional): Must be either True, False, or
-                the string 'both'. Defaults to True.
+            active (bool or string, optional): Must be either True, False, or the string 'both'. Defaults to True.
         """
         cond1 = (active is True)
         cond2 = (active is False)
@@ -153,7 +152,7 @@ class TimeEntries(TogglObject, GetMixin, CreateMixin, UpdateMixin,
 
     def start(self, data):
         """ Starts a new time entry. """
-        return super(TimeEntries, self).update(child_uri='/start', data=data)
+        return super(TimeEntries, self).create(child_uri='/start', data=data)
 
     def stop(self, time_entry_id):
         """ Stops the time entry with the given ID. """
@@ -292,8 +291,7 @@ class Toggl(object):
 
         Args:
             uri (str): The URI/path to append to the full API URL.
-            params (dict, optional): Extra parameters/querystrings to accompany
-                the GET request.
+            params (dict, optional): Extra parameters/querystrings to accompany the GET request.
         """
         full_uri = '{base}{uri}'.format(base=self.api_url, uri=uri)
         return requests.get(full_uri, params=params, auth=self.auth)
