@@ -91,8 +91,40 @@ Documentation
 -------------------
 Find the full documentation here: http://togglwrapper.readthedocs.org/en/latest/
 
+
 ---------------------------
 API Endpoints Documentation
 ---------------------------
 
 For full details on what fields are required, and what endpoints are available, see the `Toggl API docs <https://github.com/toggl/toggl_api_docs>`_
+
+
+---------------------------
+Running tests locally
+---------------------------
+
+Using `virtualenv <https://virtualenv.pypa.io/en/stable/>`_ + `virtualenvwrapper <https://pypi.org/project/virtualenvwrapper/>`_ to keep the environment isolated:
+
+1. Create a testing virtualenv
+2. Install the test requirements
+3. `python tests.py`
+
+Sample command line output:
+
+.. code-block::
+
+    $ mkvirtualenv twtests  # if creating the virtualenv for the first time
+    Running virtualenv [...]
+    [...]
+    (twtest) $ pip install -r test-requirements.txt
+    Collecting [...]
+    [...]
+    (twtest) $ python tests.py
+    .......................................................
+    ----------------------------------------------------------------------
+    Ran 55 tests in 0.414s
+
+    OK
+    (twtest) $ deactivate
+    $
+
