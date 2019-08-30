@@ -205,25 +205,30 @@ class Workspaces(TogglObject, GetMixin, UpdateMixin):
         """ Gets the Clients for the Workspace with the given ID. """
         return super(Workspaces, self).get(workspace_id, '/clients')
 
-    def get_projects(self, workspace_id, active=None):
+    def get_projects(self, workspace_id, active=True):
         """
         Gets the Projects for the Workspace with the given ID.
 
         Args:
             workspace_id (int): id of the project to retrieve projects from.API_URL
-            active (bool or string): If True, only active projects will be returned.
-                If False only archived projects will be returned. If None, all projects
-                are returned.
+            active (bool or string): If `True` or `"true"`, only active projects
+                will be returned. If `False` of `"false"` only archived projects
+                will be returned. If `"both"` or `None`, all projects are returned.
         """
         params = {}
+        # The Toggl API accepts 3 different values: "true", "false", or "both".
+        # Note that the API expects true and false to be in lowercase, so we can't
+        # rely on Python's value for str(True) and str(False).
         if active is True:
             active = "true"
         elif active is False:
             active = "false"
+        elif active is None:
+            active = "both"
 
         if isinstance(active, str):
             if active.lower() not in ["true", "false", "both"]:
-                raise ValueError("Unexpected project state: %s" % active)
+                raise ValueError("Unexpected active value: %s" % active)
             params["active"] = active.lower()
         else:
             raise TypeError("Unexpected type: %s" % type(active))
