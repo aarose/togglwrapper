@@ -47,10 +47,12 @@ setup(
     package_data={'': ['LICENSE', 'NOTICE']},
 
     # List run-time dependencies here.
-    install_requires=requirements,
+    install_requires=[
+        "requests",
+    ],
 
-    # Development dependencies. Install using :
+    # Development dependencies. Install using `pip install -e .[dev]`
     extras_require={
-        'dev': test_requirements,
+        'dev': requirements + test_requirements,
     },
 )
