@@ -4,6 +4,15 @@
 Release History
 ===============
 
+---------
+1.2.1-alpha
+---------
+- Don't pin ``requests`` in setup.py `[#10] <https://github.com/aarose/togglwrapper/pull/10>`_
+
+- Bumped jinja2 from 2.10.1 to 2.11.3 (used for generating documentation, not in core library) `[#11] <https://github.com/aarose/togglwrapper/pull/11>`_
+
+- (ci) Added Dependabot config `[#12] <https://github.com/aarose/togglwrapper/pull/12>`_
+
 -----
 1.2.0
 -----
