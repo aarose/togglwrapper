@@ -1,0 +1,10 @@
+version: 2
+
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      # Check for updates every Friday at noon UTC
+      interval: "weekly"
+      day: "friday"
+      time: "12:00"
