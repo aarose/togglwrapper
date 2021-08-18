@@ -5,11 +5,16 @@ Installation
 
 If you have pip installed, you can use it to easily install togglwrapper:
 
+From pip
+--------
 
 .. code-block:: bash   
     
     $ pip install requests
 
+
+From source 
+-----------
 
 You may also install from source. Either clone the repository, hosted on Github:
 

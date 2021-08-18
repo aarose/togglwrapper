@@ -1,18 +1,18 @@
 .. togglwrapper documentation master file, created by
-   sphinx-quickstart on Tue Sep  1 10:22:32 2015.
+   sphinx-quickstart on Mon Mar 29 20:53:15 2021.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
 Welcome to togglwrapper's documentation!
 ========================================
 
-Release v\ |version|. (:ref:`Installation <install>`)
+Release v |version|. (:ref:`Installation <install>`)
 
-Python library to easily interface with `Toggl's <https://www.toggl.com>`_ API. Toggl is free time tracking software.
+togglwrapper is a `Python <https://www.python.org/>`_ library to easily talk to `Toggl's <https://www.toggl.com>`_ `Track API <https://github.com/toggl/toggl_api_docs>`_. Toggl Track is a free time tracking tool.
 
 Works in Python 2.7+ and Python 3+.
 
-Please see `Toggl's API Documentation <https://github.com/toggl/toggl_api_docs>`_ for information about which keys and values to send for the ``data`` dict used during creating and updating.
+Please see `Toggl's Track API Documentation <https://github.com/toggl/toggl_api_docs>`_ for information about which keys and values to send for the ``data`` dict used during creating and updating.
 
 
 Features
@@ -25,8 +25,8 @@ Features
 - Uses `requests <http://www.python-requests.org/en/latest/>`_ for seamless HTTP requests
 
 
-Guide
------
+Guides
+------
 
 .. toctree::
   :maxdepth: 2
@@ -44,10 +44,9 @@ API Documentation
   api
 
 
-Indices and tables
-==================
+Reference
+---------
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

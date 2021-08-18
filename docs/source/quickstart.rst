@@ -9,22 +9,32 @@ Example Usage
 .. code-block:: python
 
     >>> from togglwrapper import Toggl
-    >>> toggl = Toggl('your_api_token')``
+    >>> toggl = Toggl('your_api_token')
     >>> toggl.User.get()
-    {u'data': {u'achievements_enabled': True,
-    u'api_token': u'your_api_token',
-    u'email': u'your_email@domain.com',
-    u'fullname': u'Your Name',
-    ...
+    {
+        u'data': {
+            u'achievements_enabled': True,
+            u'api_token': u'your_api_token',
+            u'email': u'your_email@domain.com',
+            u'fullname': u'Your Name',
+            ...
+        }
     }
     >>> toggl.Workspaces.get()
-    [{u'admin': True,
-    u'api_token': u'your_api_token',
-    u'id': 1234,
-    ...
+    [{
+        u'admin': True,
+        u'api_token': u'your_api_token',
+        u'id': 1234,
+        ...
     }]
     >>> toggl.Clients.create({"client":{"name":"Very Big Company", "wid": 1234}})
-    {u'data': {u'id': 294021, u'name': u'Very Big Company', u'wid': 1234}}
+    {
+        u'data': {
+            u'id': 294021,
+            u'name': u'Very Big Company',
+            u'wid': 1234,
+        }
+    }
 
 
 Creating a Custom Request
