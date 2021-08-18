@@ -111,14 +111,12 @@ Using `virtualenv <https://virtualenv.pypa.io/en/stable/>`_ + `virtualenvwrapper
 
 Sample command line output:
 
-.. code-block::
+.. code-block:: bash
 
     $ mkvirtualenv twtests  # if creating the virtualenv for the first time
     Running virtualenv [...]
-    [...]
-    (twtest) $ pip install -r test-requirements.txt
+    (twtest) $ pip install -r test_requirements.txt
     Collecting [...]
-    [...]
     (twtest) $ python tests.py
     .......................................................
     ----------------------------------------------------------------------
