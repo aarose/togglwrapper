@@ -44,7 +44,7 @@ You can use `pip freeze` to inspect what's currently installed.
 
 If you made changes to the docstrings and want to see them reflected, you'll have to install a local version of togglwrapper instead of installing from pypi. To install your local in-progress togglwrapper:
 
-1. Update `setup.py` to have an alpha version of the next minor or major release. e.g. `version='1.2.2-alpha'`
+1. Update `togglwrapper/__init__.py` to have an alpha version of the next minor or major release. e.g. `__version__ = '2.0.1-alpha'`
 2. `pip install -e .` (while standing in the root directory, not `/docs`)
 
 ```
