@@ -1,6 +1,8 @@
 from os import path
 from setuptools import setup
 
+from togglwrapper import __version__
+
 
 here = path.abspath(path.dirname(__file__))
 
@@ -21,7 +23,7 @@ with open(path.join(here, 'test_requirements.txt')) as f:
 
 setup(
     name='togglwrapper',
-    version='1.2.1',
+    version=__version__,
     short_description="Library to easily interface with Toggl's API.",
     long_description=long_description,
     url='https://github.com/aarose/togglwrapper',
