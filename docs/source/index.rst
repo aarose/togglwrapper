@@ -6,7 +6,7 @@
 Welcome to togglwrapper's documentation!
 ========================================
 
-Release v\ |version|. (:ref:`Installation <install>`)
+Release v |version|. (:ref:`Installation <install>`)
 
 togglwrapper is a `Python <https://www.python.org/>`_ library to easily talk to `Toggl's <https://www.toggl.com>`_ `Track API <https://github.com/toggl/toggl_api_docs>`_. Toggl Track is a free time tracking tool.
 

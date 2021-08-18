@@ -21,7 +21,9 @@ project = 'togglwrapper'
 copyright = '2021, aarose'
 author = 'aarose'
 
-# The full version, including alpha/beta/rc tags
+# The major project version. e.g. 2.6
+version = '1.2.1'
+# The full version, including alpha/beta/rc tags. e.g. 2.6.0rc1
 release = '1.2.1'
 
 
