@@ -5,6 +5,14 @@ Release History
 ===============
 
 -------------------
+2.0.0 - TBD
+------------------
+- Bumped major version since base API URL for Toggl changed `[#27] <https://github.com/aarose/togglwrapper/pull/27>`
+
+- (docs) Updated for increased readability
+
+
+-------------------
 1.2.1 - 2021.03.25
 ------------------
 - Don't pin ``requests`` in setup.py `[#10] <https://github.com/aarose/togglwrapper/pull/10>`_
