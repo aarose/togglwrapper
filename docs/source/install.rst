@@ -10,7 +10,7 @@ From pip
 
 .. code-block:: bash   
     
-    $ pip install requests
+    $ pip install togglwrapper
 
 
 From source 
