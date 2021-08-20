@@ -2,8 +2,8 @@
 
 .. module:: togglwrapper
 
-Toggl
------
+Toggl Root Object
+-----------------
 
 .. autoclass:: togglwrapper.Toggl
     :inherited-members:

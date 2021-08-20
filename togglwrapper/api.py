@@ -13,7 +13,7 @@ from .decorators import error_checking, return_json
 from .mixins import GetMixin, CreateMixin, UpdateMixin, DeleteMixin
 
 
-BASE_URL = 'https://www.toggl.com/api'
+BASE_URL = 'https://api.track.toggl.com/api'
 API_VERSION = 'v8'
 API_URL = '{base}/{version}'.format(base=BASE_URL, version=API_VERSION)
 
@@ -71,7 +71,7 @@ class Clients(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
         """
         cond1 = (active is True)
         cond2 = (active is False)
-        cond3 = (active is 'both')
+        cond3 = (active == 'both')
         if not any((cond1, cond2, cond3)):
             raise Exception("The 'active' param must be either True, False,",
                             "or 'both'.")

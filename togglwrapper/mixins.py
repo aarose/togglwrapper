@@ -44,6 +44,7 @@ class CreateMixin(object):
 
         Args:
             data (dict): The dict of information needed to create a new object.
+
             child_uri (str, optional): The URI of the child Object or subpath.
                 Defaults to None.
         """
