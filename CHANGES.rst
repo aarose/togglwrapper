@@ -5,11 +5,17 @@ Release History
 ===============
 
 -------------------
-2.0.0 - TBD
+2.0.0 - 2021.08.19
 ------------------
 - Bumped major version since base API URL for Toggl changed `[#27] <https://github.com/aarose/togglwrapper/pull/27>`
 
-- (docs) Updated for increased readability
+- Switched to using __version__ to set version, instead of setting directly in setup.py
+
+- (docs) Revamped docs with new version of Sphinx `[#33] <https://github.com/aarose/togglwrapper/pull/33>`
+
+- (docs) Updated docs README for increased maintainability
+
+- (chore) Bumped up dependency versions from dependabot suggestions (all dev-side updates).
 
 
 -------------------
