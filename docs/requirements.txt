@@ -1,2 +1,2 @@
-sphinx==4.1.2
+sphinx==6.0.0
 togglwrapper
