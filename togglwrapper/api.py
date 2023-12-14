@@ -5,13 +5,20 @@ togglwrapper.api
 """
 from __future__ import annotations
 import json
-from typing import Iterable, overload
+from typing import Iterable, Literal, overload
 
 import requests
 from requests.auth import HTTPBasicAuth
 
 from .decorators import error_checking, return_json
-from .mixins import GetMixin, CreateMixin, UpdateMixin, DataDict, DeleteMixin
+from .mixins import (
+    GetMixin,
+    CreateMixin,
+    PatchMixin,
+    UpdateMixin,
+    DataDict,
+    DeleteMixin,
+)
 
 
 BASE_URL = "https://api.track.toggl.com/api"
@@ -77,31 +84,56 @@ class Clients(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
     uri: str = "/clients"
     prepend_workspace_id: bool = True
 
-    def get_projects(self, client_id: int, active: bool = True) -> requests.Response:
-        """
-        Gets the projects associated with the Client with the given ID.
+    # DOESN'T EXIST IN v9
+    # def get_projects(
+    #     self, client_id: int, active: bool | Literal["both"] = True
+    # ) -> requests.Response:
+    #     """
+    #     Gets the projects associated with the Client with the given ID.
 
-        Args:
-            client_id (int): The ID of the client.
-            active (bool or string, optional): Must be either True, False, or the string 'both'. Defaults to True.
-        """
-        cond1 = active is True
-        cond2 = active is False
-        cond3 = active == "both"
-        if not any((cond1, cond2, cond3)):
-            raise Exception(
-                "The 'active' param must be either True, False,", "or 'both'."
-            )
-        params = {"active": active}
-        return super(Clients, self).get(client_id, "/projects", params=params)
+    #     Args:
+    #         client_id (int): The ID of the client.
+    #         active (bool or string, optional): Must be either True, False, or the string 'both'. Defaults to True.
+    #     """
+    #     cond1 = active is True
+    #     cond2 = active is False
+    #     cond3 = active == "both"
+    #     if not any((cond1, cond2, cond3)):
+    #         raise Exception(
+    #             "The 'active' param must be either True, False,", "or 'both'."
+    #         )
+    #     params = {"active": active}
+    #     return super(Clients, self).get(client_id, "/projects", params=params)
 
+    @overload
     def get(self, client_id: int) -> requests.Response:
         """Gets the Client with the given ID."""
-        return super(Clients, self).get(id=client_id)
+        ...
+
+    @overload
+    def get(
+        self,
+        status: Literal["active", "archived", "both"] = "active",
+        name: str | None = None,
+    ) -> requests.Response:
+        """Gets all the Clients."""
+        ...
+
+    def get(
+        self,
+        client_id: int | None = None,
+        status: Literal["active", "archived", "both"] = "active",
+        name: str | None = None,
+    ) -> requests.Response:
+        """Gets the Client with the given ID."""
+        params = {"status": status}
+        if name:
+            params["name"] = name
+        return super(Clients, self).get(client_id, params=params)
 
 
 class Dashboard(TogglObject, GetMixin):
-    uri: str = "dashboard/all_activity"
+    uri: str = "/dashboard/all_activity"
     prepend_workspace_id: bool = True
 
     def get(self) -> requests.Response:
@@ -128,25 +160,43 @@ class Projects(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
     ) -> requests.Response:
         return super(Projects, self).get(id=project_id, params=params)
 
-    def get_project_users(self, project_id: int) -> requests.Response:
-        """Gets the ProjectUsers for the Project with the given ID."""
-        return super(Projects, self).get(project_id, "/project_users")
+    # Use ProjectUsers instead
+    # def get_project_users(self, project_id: int) -> requests.Response:
+    #     """Gets the ProjectUsers for the Project with the given ID."""
+    #     return super(Projects, self).get(project_id, "/project_users")
 
     def get_tasks(self, project_id: int) -> requests.Response:
         """Gets the Tasks for the Project with the given ID."""
         return super(Projects, self).get(project_id, "/tasks")
 
+    def get_task(self, project_id: int, task_id: int) -> requests.Response:
+        """Gets the Tasks for the Project with the given ID."""
+        return super(Projects, self).get(project_id, "/tasks/{}".format(task_id))
 
-class ProjectUsers(TogglObject, CreateMixin, UpdateMixin, DeleteMixin):
+
+class ProjectUsers(
+    TogglObject, GetMixin, CreateMixin, PatchMixin, UpdateMixin, DeleteMixin
+):
     uri: str = "/project_users"
     prepend_workspace_id: bool = True
 
-    def get_for_project(self, project_id: int) -> requests.Response:
-        """Gets the ProjectUsers for the Project with the given ID."""
-        return self.toggl.Projects.get_project_users(project_id)
+    def get(
+        self,
+        project_ids: list[int] | None = None,
+        with_group_members: bool | None = None,
+    ) -> requests.Response:
+        """Gets the ProjectUsers with the given criteria."""
+        params = {}
+        if project_ids is not None:
+            params["project_ids"] = "".join(
+                [str(project_id) for project_id in project_ids]
+            )
+        if with_group_members is not None:
+            params["with_group_members"] = with_group_members
+        return super(ProjectUsers, self).get(params=params)
 
 
-class Tags(TogglObject, CreateMixin, UpdateMixin, DeleteMixin):
+class Tags(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
     uri: str = "/tags"
     prepend_workspace_id: bool = True
 
@@ -156,8 +206,12 @@ class Tasks(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
     prepend_workspace_id: bool = True
 
     @overload
-    def get(self, project_id: int) -> requests.Response:
-        """Gets the Task with the given ID."""
+    def get(
+        self,
+        task_id: int,
+        project_id: int,
+    ) -> requests.Response:
+        """Gets the Task with the given IDs."""
         ...
 
     @overload
@@ -165,7 +219,11 @@ class Tasks(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
         """Gets all the Tasks."""
         ...
 
-    def get(self, task_id: int | None = None) -> requests.Response:
+    def get(
+        self, task_id: int | None = None, project_id: int | None = None
+    ) -> requests.Response:
+        if project_id is not None:
+            return self.toggl.Projects.get_task(project_id, task_id)
         return super(Tasks, self).get(id=task_id)
 
     def get_for_project(self, project_id: int) -> requests.Response:
@@ -173,7 +231,7 @@ class Tasks(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
         return self.toggl.Projects.get_tasks(project_id)
 
 
-class TimeEntries(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
+class TimeEntries(TogglObject, GetMixin, CreateMixin, PatchMixin, DeleteMixin):
     uri: str = "/time_entries"
     prepend_workspace_id: bool = True
 
@@ -184,7 +242,8 @@ class TimeEntries(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
 
     @overload
     def get(self, start_date: str, end_date: str) -> requests.Response:
-        """Gets up to 1000 TimeEntries in the given time range."""
+        """Gets up to 1000 TimeEntries in the given time range. Dates must be ISO 8601
+        date and time strings, e.g. '2013-03-10T15:42:46+02:00'."""
         ...
 
     @overload
@@ -214,19 +273,19 @@ class TimeEntries(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
                 e.g. '2013-03-10T15:42:46+02:00'. Defaults to None.
         """
         params = {"start_date": start_date, "end_date": end_date}
-        return super(TimeEntries, self).get(id=id, params=params)
+        return super(TimeEntries, self).get(id=id, params=params, parent_uri="/me")
 
     def start(self, data: DataDict) -> requests.Response:
         """Starts a new time entry."""
-        return super(TimeEntries, self).create(child_uri="/start", data=data)
+        return super(TimeEntries, self).create(data=data)
 
     def stop(self, time_entry_id: int) -> requests.Response:
         """Stops the time entry with the given ID."""
-        return super(TimeEntries, self).update(id=time_entry_id, child_uri="/stop")
+        return super(TimeEntries, self).patch(id=time_entry_id, child_uri="/stop")
 
     def get_current(self) -> requests.Response:
         """Gets the current running time entry."""
-        return super(TimeEntries, self).get(child_uri="/current", parent_uri="me")
+        return super(TimeEntries, self).get(child_uri="/current", parent_uri="/me")
 
 
 class User(TogglObject, GetMixin, UpdateMixin):
@@ -394,6 +453,20 @@ class Toggl(object):
         full_uri = "{base}{uri}".format(base=self.api_url, uri=uri)
         payload = json.dumps(data)
         return requests.put(full_uri, data=payload, auth=self.auth)
+
+    @return_json
+    @error_checking
+    def patch(self, uri: str, data: DataDict) -> requests.Response:
+        """
+        PATCHes to the given URI with a data.
+
+        Args:
+            uri (str): The URI/path to append to the full API URL.
+            data: dict, bytes, or file-like object to PATCH.
+        """
+        full_uri = "{base}{uri}".format(base=self.api_url, uri=uri)
+        payload = json.dumps(data)
+        return requests.patch(full_uri, data=payload, auth=self.auth)
 
     @error_checking
     def delete(self, uri: str) -> requests.Response:

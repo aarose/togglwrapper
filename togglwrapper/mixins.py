@@ -119,6 +119,44 @@ class UpdateMixin(object):
         return self.toggl.put(uri, data)
 
 
+class PatchMixin(object):
+    """Mixin to add PATCH methods to a class."""
+
+    def patch(
+        self,
+        id: int | None = None,
+        ids: Iterable[int] | None = None,
+        child_uri: str | None = None,
+        parent_uri: str | None = None,
+        data: DataDict | None = None,
+    ) -> Response:
+        """
+        Updates a specific instance by ID, or update multiple instances.
+
+        Args:
+            id (int, optional): The ID of the instance to update. Defaults to
+                None.
+            ids (iterable of ints, optional): An iterable of IDs of instances
+                to update. Not all objects allow multiple instances to be
+                updated at once - see Toggl's API Documentation to see where
+                this is allowed. Defaults to None.
+            child_uri (str, optional): The URI/path to append to the object's
+                URI, to update. Defaults to None.
+            data (dict, optional): The dict of information to update the
+                object(s). Defaults to None.
+        """
+        if parent_uri is None:
+            parent_uri = (
+                "/workspaces/{}".format(self.workspace_id)
+                if self.prepend_workspace_id
+                else None
+            )
+        uri = self._compile_uri(
+            id=id, ids=ids, child_uri=child_uri, parent_uri=parent_uri
+        )
+        return self.toggl.patch(uri, data)
+
+
 class DeleteMixin(object):
     """Mixin to add delete methods to a class."""
 
