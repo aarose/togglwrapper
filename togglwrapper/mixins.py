@@ -14,8 +14,9 @@ methods out into mixins allows easy mix-and-matching, and re-useability.
 
 
 class GetMixin(object):
-    """ Mixin to add get methods to a class. """
-    def get(self, id=None, child_uri=None, params=None):
+    """Mixin to add get methods to a class."""
+
+    def get(self, id=None, child_uri=None, parent_uri=None, params=None):
         """
         Gets the array of objects, or a specific instance by ID.
 
@@ -32,13 +33,14 @@ class GetMixin(object):
                 include in as the querystring, appended to the URL. Keys with
                 values of None will be ignored. Defaults to None.
         """
-        uri = self._compile_uri(id, child_uri=child_uri)
+        uri = self._compile_uri(id, child_uri=child_uri, parent_uri=parent_uri)
         return self.toggl.get(uri, params=params)
 
 
 class CreateMixin(object):
-    """ Mixin to add create methods to a class. """
-    def create(self, data, child_uri=None):
+    """Mixin to add create methods to a class."""
+
+    def create(self, data, child_uri=None, parent_uri=None):
         """
         Creates a new instance of the object type.
 
@@ -48,13 +50,14 @@ class CreateMixin(object):
             child_uri (str, optional): The URI of the child Object or subpath.
                 Defaults to None.
         """
-        uri = self._compile_uri(child_uri=child_uri)
+        uri = self._compile_uri(child_uri=child_uri, parent_uri=parent_uri)
         return self.toggl.post(uri, data)
 
 
 class UpdateMixin(object):
-    """ Mixin to add update methods to a class. """
-    def update(self, id=None, ids=None, child_uri=None, data=None):
+    """Mixin to add update methods to a class."""
+
+    def update(self, id=None, ids=None, child_uri=None, parent_uri=None, data=None):
         """
         Updates a specific instance by ID, or update multiple instances.
 
@@ -70,13 +73,16 @@ class UpdateMixin(object):
             data (dict, optional): The dict of information to update the
                 object(s). Defaults to None.
         """
-        uri = self._compile_uri(id=id, ids=ids, child_uri=child_uri)
+        uri = self._compile_uri(
+            id=id, ids=ids, child_uri=child_uri, parent_uri=parent_uri
+        )
         return self.toggl.put(uri, data)
 
 
 class DeleteMixin(object):
-    """ Mixin to add delete methods to a class. """
-    def delete(self, id=None, ids=None):
+    """Mixin to add delete methods to a class."""
+
+    def delete(self, id=None, ids=None, parent_uri=None):
         """
         Deletes a specific instance by ID, or delete multiple instances.
 
@@ -89,5 +95,7 @@ class DeleteMixin(object):
                 this is allowed. Defaults to None.
         """
         if not any((id, ids)):
-            raise Exception('Must provide either an ID or an iterable of IDs.')
-        return self.toggl.delete(self._compile_uri(id=id, ids=ids))
+            raise Exception("Must provide either an ID or an iterable of IDs.")
+        return self.toggl.delete(
+            self._compile_uri(id=id, ids=ids, parent_uri=parent_uri)
+        )
