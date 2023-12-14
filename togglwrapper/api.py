@@ -3,14 +3,15 @@
 """
 togglwrapper.api
 """
-
+from __future__ import annotations
 import json
+from typing import Iterable
 
 import requests
 from requests.auth import HTTPBasicAuth
 
 from .decorators import error_checking, return_json
-from .mixins import GetMixin, CreateMixin, UpdateMixin, DeleteMixin
+from .mixins import GetMixin, CreateMixin, UpdateMixin, DataDict, DeleteMixin
 
 
 BASE_URL = "https://api.track.toggl.com/api"
@@ -21,9 +22,9 @@ API_URL = "{base}/{version}".format(base=BASE_URL, version=API_VERSION)
 class TogglObject(object):
     """Base class for Toggl object representations to inherit from."""
 
-    uri = None
+    uri: str | None = None
 
-    def __init__(self, toggl):
+    def __init__(self, toggl: Toggl) -> None:
         self.toggl = toggl
         self.workspace_id = toggl.workspace_id
         if self.uri is None:
@@ -31,7 +32,13 @@ class TogglObject(object):
             raise NotImplementedError("Must define a URI.")
 
     @classmethod
-    def _compile_uri(cls, id=None, ids=None, child_uri=None, parent_uri=None):
+    def _compile_uri(
+        cls,
+        id: int | None = None,
+        ids: Iterable[int] | None = None,
+        child_uri: str | None = None,
+        parent_uri: str | None = None,
+    ) -> str:
         """
         Returns the path to append to the base API URL.
 
@@ -64,9 +71,9 @@ class Clients(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
     Groups all actions relating to Clients together.
     """
 
-    uri = "/clients"
+    uri: str = "/clients"
 
-    def get_projects(self, client_id, active=True):
+    def get_projects(self, client_id: int, active: bool = True) -> requests.Response:
         """
         Gets the projects associated with the Client with the given ID.
 
@@ -91,23 +98,23 @@ class Clients(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
 
 
 class Dashboard(TogglObject, GetMixin):
-    uri = "dashboard"
+    uri: str = "dashboard"
 
-    def get(self, workspace_id):
+    def get(self, workspace_id: int) -> requests.Response:
         """Gets the Dashboard for the Workspace with the given ID."""
         return super(Dashboard, self).get(id=workspace_id)
 
 
 class Projects(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
-    uri = "/projects"
+    uri: str = "/projects"
 
-    def get(self, project_id):
+    def get(self, project_id: int) -> requests.Response:
         """Gets the Project with the given ID."""
         return super(Projects, self).get(
             id=project_id, parent_uri=f"/workspaces/{self.workspace_id}"
         )
 
-    def get_project_users(self, project_id):
+    def get_project_users(self, project_id: int) -> requests.Response:
         """Gets the ProjectUsers for the Project with the given ID."""
         return super(Projects, self).get(
             project_id,
@@ -115,7 +122,7 @@ class Projects(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
             parent_uri=f"/workspaces/{self.workspace_id}",
         )
 
-    def get_tasks(self, project_id):
+    def get_tasks(self, project_id: int) -> requests.Response:
         """Gets the Tasks for the Project with the given ID."""
         return super(Projects, self).get(
             project_id, "/tasks", parent_uri=f"/workspaces/{self.workspace_id}"
@@ -123,33 +130,38 @@ class Projects(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
 
 
 class ProjectUsers(TogglObject, CreateMixin, UpdateMixin, DeleteMixin):
-    uri = "/project_users"
+    uri: str = "/project_users"
 
-    def get_for_project(self, project_id):
+    def get_for_project(self, project_id: int) -> requests.Response:
         """Gets the ProjectUsers for the Project with the given ID."""
         return self.toggl.Projects.get_project_users(project_id)
 
 
 class Tags(TogglObject, CreateMixin, UpdateMixin, DeleteMixin):
-    uri = "/tags"
+    uri: str = "/tags"
 
 
 class Tasks(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
-    uri = "/tasks"
+    uri: str = "/tasks"
 
-    def get(self, tag_id):
+    def get(self, tag_id: int) -> requests.Response:
         """Gets the Task instance with the given ID."""
         return super(Tasks, self).get(id=tag_id)
 
-    def get_for_project(self, project_id):
+    def get_for_project(self, project_id: int) -> requests.Response:
         """Gets the Tasks for the Project with the given ID."""
         return self.toggl.Projects.get_tasks(project_id)
 
 
 class TimeEntries(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
-    uri = "/time_entries"
+    uri: str = "/time_entries"
 
-    def get(self, id=None, start_date=None, end_date=None):
+    def get(
+        self,
+        id: int | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> requests.Response:
         """
         Gets a time entry, or time entires in a time range, or the latest ones.
 
@@ -170,13 +182,13 @@ class TimeEntries(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
             id=id, params=params, parent_uri=f"/workspaces/{self.workspace_id}"
         )
 
-    def start(self, data):
+    def start(self, data: DataDict) -> requests.Response:
         """Starts a new time entry."""
         return super(TimeEntries, self).create(
             child_uri="/start", data=data, parent_uri=f"/workspaces/{self.workspace_id}"
         )
 
-    def stop(self, time_entry_id):
+    def stop(self, time_entry_id: int) -> requests.Response:
         """Stops the time entry with the given ID."""
         return super(TimeEntries, self).update(
             id=time_entry_id,
@@ -184,15 +196,17 @@ class TimeEntries(TogglObject, GetMixin, CreateMixin, UpdateMixin, DeleteMixin):
             parent_uri=f"/workspaces/{self.workspace_id}",
         )
 
-    def get_current(self):
+    def get_current(self) -> requests.Response:
         """Gets the current running time entry."""
         return super(TimeEntries, self).get(child_uri="/current", parent_uri="me")
 
 
 class User(TogglObject, GetMixin, UpdateMixin):
-    uri = "/me"
+    uri: str = "/me"
 
-    def get(self, related_data=False, since=None):
+    def get(
+        self, related_data: bool = False, since: str | int | None = None
+    ) -> requests.Response:
         """
         Gets the User associated with the current API token.
 
@@ -209,7 +223,7 @@ class User(TogglObject, GetMixin, UpdateMixin):
             params["with_related_data"] = related_data
         return super(User, self).get(params=params)
 
-    def update(self, data):
+    def update(self, data: DataDict) -> requests.Response:
         """
         Updates the user associated with the api token.
 
@@ -220,37 +234,36 @@ class User(TogglObject, GetMixin, UpdateMixin):
 
 
 class Workspaces(TogglObject, GetMixin, UpdateMixin):
-    uri = "/workspaces"
+    uri: str = "/workspaces"
 
-    def get_users(self):
+    def get_users(self) -> requests.Response:
         """Gets the Users for the Workspace with the given ID."""
         return super(Workspaces, self).get(self.workspace_id, "/users")
 
-    def get_clients(self):
+    def get_clients(self) -> requests.Response:
         """Gets the Clients for the Workspace with the given ID."""
         return super(Workspaces, self).get(self.workspace_id, "/clients")
 
-    def get_projects(self):
+    def get_projects(self) -> requests.Response:
         """Gets the Projects for the Workspace with the given ID."""
         return super(Workspaces, self).get(self.workspace_id, "/projects")
 
-    def get_tasks(self):
+    def get_tasks(self) -> requests.Response:
         """Gets the Tasks for the Workspace with the given ID."""
         return super(Workspaces, self).get(self.workspace_id, "/tasks")
 
-    def get_tags(self):
+    def get_tags(self) -> requests.Response:
         """Gets the Tags for the Workspace with the given ID."""
         return super(Workspaces, self).get(self.workspace_id, "/tags")
 
-    def invite(self, workspace_id, data):
+    def invite(self, data: DataDict) -> requests.Response:
         """
         Adds users to the workspace. Sends an email invite to the users.
 
         Args:
-            workspace_id (int): The ID of the workspace to invite the user to.
             data (dict): The information needed to invite the right user.
         """
-        uri = "/workspaces/{wid}/invite".format(wid=workspace_id)
+        uri = "/workspaces/{wid}/invite".format(wid=self.toggl.workspace_id)
         return self.toggl.post(uri, data)
 
 
@@ -262,7 +275,13 @@ class Toggl(object):
     upon instantiation.
     """
 
-    def __init__(self, api_token, workspace_id, base_url=BASE_URL, version=API_VERSION):
+    def __init__(
+        self,
+        api_token: str,
+        workspace_id: int,
+        base_url: str = BASE_URL,
+        version: str = API_VERSION,
+    ) -> None:
         """
         Initializes the Toggl client object.
 
@@ -275,20 +294,20 @@ class Toggl(object):
             version (str): The version of the API. Used to compile the full
                 URL. Defaults to `v8`.
         """
-        self.api_url = "{base}/{version}".format(base=base_url, version=version)
-        self.workspace_id = workspace_id
-        self.auth = HTTPBasicAuth(api_token, "api_token")
-        self.Clients = Clients(self)
-        self.Dashboard = Dashboard(self)
-        self.Projects = Projects(self)
-        self.ProjectUsers = ProjectUsers(self)
-        self.Tags = Tags(self)
-        self.Tasks = Tasks(self)
-        self.TimeEntries = TimeEntries(self)
-        self.User = User(self)
-        self.Workspaces = Workspaces(self)
+        self.api_url: str = "{base}/{version}".format(base=base_url, version=version)
+        self.workspace_id: int = workspace_id
+        self.auth: HTTPBasicAuth = HTTPBasicAuth(api_token, "api_token")
+        self.Clients: Clients = Clients(self)
+        self.Dashboard: Dashboard = Dashboard(self)
+        self.Projects: Projects = Projects(self)
+        self.ProjectUsers: ProjectUsers = ProjectUsers(self)
+        self.Tags: Tags = Tags(self)
+        self.Tasks: Tasks = Tasks(self)
+        self.TimeEntries: TimeEntries = TimeEntries(self)
+        self.User: User = User(self)
+        self.Workspaces: Workspaces = Workspaces(self)
 
-    def signups(self, data):
+    def signups(self, data: DataDict) -> requests.Response:
         """
         Creates a new user.
 
@@ -297,13 +316,13 @@ class Toggl(object):
         """
         return self.post("/signup", data)
 
-    def reset_token(self):
+    def reset_token(self) -> requests.Response:
         """Deletes the current API Token and returns a new token."""
         return self.post("/me/reset_token")
 
     @return_json
     @error_checking
-    def get(self, uri, params=None):
+    def get(self, uri: str, params: DataDict | None = None) -> requests.Response:
         """
         GETs to the given URI.
 
@@ -316,7 +335,7 @@ class Toggl(object):
 
     @return_json
     @error_checking
-    def post(self, uri, data=None):
+    def post(self, uri: str, data: DataDict | None = None) -> requests.Response:
         """
         POSTs to the given URI.
 
@@ -330,7 +349,7 @@ class Toggl(object):
 
     @return_json
     @error_checking
-    def put(self, uri, data):
+    def put(self, uri: str, data: DataDict) -> requests.Response:
         """
         PUTs to the given URI with a data.
 
@@ -343,7 +362,7 @@ class Toggl(object):
         return requests.put(full_uri, data=payload, auth=self.auth)
 
     @error_checking
-    def delete(self, uri):
+    def delete(self, uri: str) -> requests.Response:
         """DELETEs to the given URI."""
         full_uri = "{base}{uri}".format(base=self.api_url, uri=uri)
         return requests.delete(full_uri, auth=self.auth)

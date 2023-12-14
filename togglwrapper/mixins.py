@@ -11,12 +11,22 @@ methods, but some only implement two or three of the four (e,g, User only
 allows updating and getting, not deleting or creating). Separating the
 methods out into mixins allows easy mix-and-matching, and re-useability.
 """
+from requests import Response
+from typing import Any, Iterable
+
+DataDict = dict[str, Any]  # TODO: this is not quite the right type
 
 
 class GetMixin(object):
     """Mixin to add get methods to a class."""
 
-    def get(self, id=None, child_uri=None, parent_uri=None, params=None):
+    def get(
+        self,
+        id: int | None = None,
+        child_uri: str | None = None,
+        parent_uri: str | None = None,
+        params: DataDict | None = None,
+    ):
         """
         Gets the array of objects, or a specific instance by ID.
 
@@ -40,7 +50,9 @@ class GetMixin(object):
 class CreateMixin(object):
     """Mixin to add create methods to a class."""
 
-    def create(self, data, child_uri=None, parent_uri=None):
+    def create(
+        self, data, child_uri: str | None = None, parent_uri: str | None = None
+    ) -> Response:
         """
         Creates a new instance of the object type.
 
@@ -57,7 +69,14 @@ class CreateMixin(object):
 class UpdateMixin(object):
     """Mixin to add update methods to a class."""
 
-    def update(self, id=None, ids=None, child_uri=None, parent_uri=None, data=None):
+    def update(
+        self,
+        id: int | None = None,
+        ids: Iterable[int] | None = None,
+        child_uri: str | None = None,
+        parent_uri: str | None = None,
+        data: DataDict | None = None,
+    ) -> Response:
         """
         Updates a specific instance by ID, or update multiple instances.
 
@@ -82,7 +101,12 @@ class UpdateMixin(object):
 class DeleteMixin(object):
     """Mixin to add delete methods to a class."""
 
-    def delete(self, id=None, ids=None, parent_uri=None):
+    def delete(
+        self,
+        id: int | None = None,
+        ids: Iterable[int] | None = None,
+        parent_uri: str | None = None,
+    ) -> Response:
         """
         Deletes a specific instance by ID, or delete multiple instances.
 
