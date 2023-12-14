@@ -43,6 +43,12 @@ class GetMixin(object):
                 include in as the querystring, appended to the URL. Keys with
                 values of None will be ignored. Defaults to None.
         """
+        if parent_uri is None:
+            parent_uri = (
+                "/workspaces/{}".format(self.workspace_id)
+                if self.prepend_workspace_id
+                else None
+            )
         uri = self._compile_uri(id, child_uri=child_uri, parent_uri=parent_uri)
         return self.toggl.get(uri, params=params)
 
@@ -51,7 +57,10 @@ class CreateMixin(object):
     """Mixin to add create methods to a class."""
 
     def create(
-        self, data, child_uri: str | None = None, parent_uri: str | None = None
+        self,
+        data,
+        child_uri: str | None = None,
+        parent_uri: str | None = None,
     ) -> Response:
         """
         Creates a new instance of the object type.
@@ -62,6 +71,12 @@ class CreateMixin(object):
             child_uri (str, optional): The URI of the child Object or subpath.
                 Defaults to None.
         """
+        if parent_uri is None:
+            parent_uri = (
+                "/workspaces/{}".format(self.workspace_id)
+                if self.prepend_workspace_id
+                else None
+            )
         uri = self._compile_uri(child_uri=child_uri, parent_uri=parent_uri)
         return self.toggl.post(uri, data)
 
@@ -92,6 +107,12 @@ class UpdateMixin(object):
             data (dict, optional): The dict of information to update the
                 object(s). Defaults to None.
         """
+        if parent_uri is None:
+            parent_uri = (
+                "/workspaces/{}".format(self.workspace_id)
+                if self.prepend_workspace_id
+                else None
+            )
         uri = self._compile_uri(
             id=id, ids=ids, child_uri=child_uri, parent_uri=parent_uri
         )
@@ -118,6 +139,12 @@ class DeleteMixin(object):
                 instances at once. See Toggl's API Documentation to see where
                 this is allowed. Defaults to None.
         """
+        if parent_uri is None:
+            parent_uri = (
+                "/workspaces/{}".format(self.workspace_id)
+                if self.prepend_workspace_id
+                else None
+            )
         if not any((id, ids)):
             raise Exception("Must provide either an ID or an iterable of IDs.")
         return self.toggl.delete(
